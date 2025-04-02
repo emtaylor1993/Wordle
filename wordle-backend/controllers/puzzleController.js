@@ -39,6 +39,10 @@ const submitGuess = async (req, res) => {
         if (!game) return res.status(400).json({ error: "Start the Puzzle First" });
         if (game.isSolved) return res.status(400).json({ error: "Puzzle Solved" });
 
+        if (game.guessHistory.length >= 6) {
+            return res.status(400).json({ error: "No More Attempts Left" });
+        }
+
         const feedback = normalizedGuess.split("").map((letter, i) => {
             if (word[i] === letter) return "Correct";
             else if (word.includes(letter)) return "Misplaced";
@@ -50,6 +54,10 @@ const submitGuess = async (req, res) => {
         }
 
         game.guessHistory.push(normalizedGuess);
+
+        if (game.guessHistory.length >= 6 && normalizedGuess !== word) {
+            game.isFailed = true;
+        }
 
         if (normalizedGuess === word) {
             game.isSolved = true;

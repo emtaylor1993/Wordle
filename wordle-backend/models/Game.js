@@ -5,6 +5,7 @@ const gameSchema = new mongoose.Schema({
     date: { type: String },
     guessHistory: [String],
     isSolved: { type: Boolean, default: false },
+    isFailed: { type: Boolean, default: false },
 });
 
 gameSchema.index({ userId: 1, date: 1}, { unique: true });
