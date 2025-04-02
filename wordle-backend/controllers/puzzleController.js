@@ -1,5 +1,8 @@
+const User = require("../models/User");
 const Game = require("../models/Game");
 const getWordOfTheDay = require("../utils/wordOfTheDay");
+const { getTodayDate, isYesterday } = require("../utils/dateHelpers");
+const date = getTodayDate();
 
 const getTodayPuzzle = async (req, res) => {
     const userId = req.userId;
@@ -31,6 +34,7 @@ const submitGuess = async (req, res) => {
     }
 
     try {
+        const user = await User.findById(userId);
         const game = await Game.findOne({ userId, date });
         if (!game) return res.status(400).json({ error: "Start the Puzzle First" });
         if (game.isSolved) return res.status(400).json({ error: "Puzzle Solved" });
@@ -47,13 +51,30 @@ const submitGuess = async (req, res) => {
 
         game.guessHistory.push(normalizedGuess);
 
-        if (normalizedGuess == word) {
+        if (normalizedGuess === word) {
             game.isSolved = true;
+
+            if (user.lastPlayed === date) {
+
+            } else if (user.lastPlayed && isYesterday(user.lastPlayed)) {
+                user.streak += 1;
+            } else {
+                user.streak = 1;
+            }
+
+            user.lastPlayed = date;
+            await user.save();
         }
 
         await game.save();
 
-        res.json({ normalizedGuess, feedback, isSolved: game.isSolved, attempts: game.guessHistory.length });
+        res.json({ 
+            normalizedGuess, 
+            feedback, 
+            isSolved: game.isSolved, 
+            attempts: game.guessHistory.length, 
+            streak: game.isSolved ? user.streak : undefined
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Guess Submission Failed" });
