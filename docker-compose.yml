@@ -31,9 +31,10 @@ services:
       - "3000:3000"
     depends_on:
       - mongo
+    env_file:
+      - ./wordle-backend/.env
     environment:
-      - MONGO_URI=mongodb://mongo:27017/wordle
-      - JWT_SECRET=7tA5OzxAipHHIsTEQs39hg1vEFb0sJBod2znBxyxLB1wmHDJ7IM2diRs5qlVf4CkkHGPMc7+3k5kFAC3hN0z7A==
-
+      - MONGO_URI=${MONGO_URI_DOCKER}
+      - JWT_SECRET=${JWT_SECRET}
 volumes:
   mongo-data:
