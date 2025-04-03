@@ -91,6 +91,7 @@ const submitGuess = async (req, res) => {
             feedback, 
             isSolved: game.isSolved, 
             attempts: game.guessHistory.length, 
+            correctWord: word,
             streak: game.isSolved ? user.streak : undefined
         });
     } catch (err) {

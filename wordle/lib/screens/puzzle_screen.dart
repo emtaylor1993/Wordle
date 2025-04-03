@@ -61,11 +61,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           _isSolved = data['isSolved'] ?? false;
           _isFailed = _guesses.length >= 6 && !_isSolved;
         });
-        if (_isSolved) {
-          _showEndgameDialog("🎉 You solved it in ${_guesses.length} guess${_guesses.length == 1 ? '' : 'es'}!");
-        } else if (_isFailed) {
-          _showEndgameDialog("😢 You’re out of attempts.\nTry again tomorrow!");
-        }
       } else {
         setState(() {
           _error = jsonDecode(res.body)['error'] ?? "Failed to Fetch Puzzle";
@@ -109,6 +104,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         await Future.delayed(const Duration(milliseconds: 50));
         await Future.delayed(const Duration(milliseconds: 750));
         await _fetchPuzzle();
+        final data = jsonDecode(res.body);
+
+        if (data['isSolved'] == true) {
+          _showResultDialog(isWin: true, streak: data['streak']);
+        } else if ((data['attempts'] ?? 0) >= 6) {
+          _showResultDialog(isWin: false, correctWord: data['correctWord']);
+        }
       } else {
         final errorMsg = jsonDecode(res.body)['error'];
         setState(() => _error = errorMsg ?? "Invalid Guess");
@@ -123,25 +125,41 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     }
   }
 
-  void _showEndgameDialog(String message) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => AlertDialog(
-          title: const Text("Game Over"),
-          content: Text(message),
+  void _showResultDialog({required bool isWin, String? correctWord, int? streak}) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            isWin ? '🎉 You Won!' : '😢 You Lost',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isWin ? Colors.green : Colors.red,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (isWin && streak != null)
+                Text("🔥 Streak: $streak", style: const TextStyle(fontSize: 16)),
+              if (!isWin && correctWord != null)
+                Text("The word was: $correctWord".toUpperCase(),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            ],
+          ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close dialog
+              },
               child: const Text("OK"),
-            )
+            ),
           ],
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   @override
