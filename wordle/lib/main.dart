@@ -1,3 +1,21 @@
+/// ****************************************************************************************************
+/// File: main.dart
+///
+/// Author: Emmanuel Taylor
+/// Created: April 3, 2025
+/// Modified: April 3, 2025
+///
+/// Description: 
+///  - Entry point for the Wordle application. Initializes environment variables, theme
+///  - theme settings, and routing logic with provider-based state management.
+/// 
+/// Dependencies:
+///  - flutter_dotenv: Loads environment variables from a `.env` file.
+///  - provider: State management for theming and authentication.
+///  - material.dart: Flutter UI framework.
+///****************************************************************************************************
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';

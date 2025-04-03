@@ -1,8 +1,25 @@
+/******************************************************************************************************
+ * File: puzzleController.js
+ * 
+ * Author: Emmanuel Taylor
+ * Created: April 3, 2025
+ * Modified: April 5, 2025
+ * 
+ * Description:
+ *   - Contains controller logic for handling puzzle interactions like retrieving today's puzzle 
+ *     and submitting user guesses.
+ * 
+ * Dependences:
+ *   - User: For updating streak and last played date.
+ *   - Game: For storing guesses and the puzzle state.
+ *   - getWordOfTheDay: Generates the daily word puzzle.
+ *   - getTodayDate, isYesterday: Utility functions for date logic
+ ******************************************************************************************************/
+
 const User = require("../models/User");
 const Game = require("../models/Game");
 const getWordOfTheDay = require("../utils/wordOfTheDay");
-const { getTodayDate, isYesterday } = require("../utils/dateHelpers");
-const date = getTodayDate();
+const { isYesterday } = require("../utils/dateHelpers");
 
 const getTodayPuzzle = async (req, res) => {
     const userId = req.userId;

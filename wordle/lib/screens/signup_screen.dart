@@ -1,3 +1,23 @@
+/// ****************************************************************************************************
+/// File: signup_screen.dart
+///
+/// Author: Emmanuel Taylor
+/// Created: April 3, 2025
+/// Modified: April 3, 2025
+///
+/// Description: 
+///  - Signup sreen for the Wordle app. Allows users to create accounts, submit credentials to
+///  - the backend to recieve a token for authentication.
+/// 
+/// Dependencies:
+///  - flutter_dotenv: Loads environment variables from a `.env` file.
+///  - provider: State management for theming and authentication.
+///  - material.dart: Flutter UI framework.
+///  - http: Handles network requests to the backend.
+///  - dart:convert: Used for JSON decoding.
+///****************************************************************************************************
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';

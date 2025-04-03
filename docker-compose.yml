@@ -1,0 +1,39 @@
+######################################################################################################
+# File: docker-compose.yml
+#
+# Author: Emmanuel Taylor
+# Created: April 3, 2025
+# Modified: April 3, 2025
+#
+# Description:
+#   - Defines services for the Wordle backend and MongoDB using Docker Compose.
+#
+# Dependences:
+#   - MongoDB (Official Docker Image)
+#   - Node.js backend as defined in ./wordle-backend/Dockerfile
+######################################################################################################
+
+services:
+  mongo:
+    image: mongo
+    container_name: wordle-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build: ./wordle-backend
+    container_name: wordle-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/wordle
+      - JWT_SECRET=7tA5OzxAipHHIsTEQs39hg1vEFb0sJBod2znBxyxLB1wmHDJ7IM2diRs5qlVf4CkkHGPMc7+3k5kFAC3hN0z7A==
+
+volumes:
+  mongo-data:

@@ -1,3 +1,26 @@
+/// ****************************************************************************************************
+/// File: puzzle_screen.dart
+///
+/// Author: Emmanuel Taylor
+/// Created: April 3, 2025
+/// Modified: April 3, 2025
+///
+/// Description: 
+///  - Main game screen for the Wordle application. Displays a 6x5 animated grid, handles
+///  - user guesses, evaluates feedback, shows win/loss dialogs, and supports dark/light
+///  - theming and mobile/desktop controls.
+/// 
+/// Dependencies:
+///  - flutter_dotenv: Loads environment variables from a `.env` file.
+///  - provider: State management for theming and authentication.
+///  - material.dart: Flutter UI framework.
+///  - http: Handles network requests to the backend.
+///  - dart:convert: Used for JSON decoding.
+///  - dart:math: Used for rotation animation.
+///  - dart:io: Platform detection for mobile vs. web.
+///****************************************************************************************************
+library;
+
 import 'dart:convert';
 import 'dart:math';
 import 'dart:io' show Platform;

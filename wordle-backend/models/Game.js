@@ -1,3 +1,17 @@
+/******************************************************************************************************
+ * File: Game.js
+ * 
+ * Author: Emmanuel Taylor
+ * Created: April 3, 2025
+ * Modified: April 3, 2025
+ * 
+ * Description:
+ *   - Mongoose schema for tracking Users' game progress in the Wordle application.
+ * 
+ * Dependences:
+ *   - mongoose: MongoDB object modeling tool.
+ ******************************************************************************************************/
+
 const mongoose = require("mongoose");
 
 const gameSchema = new mongoose.Schema({

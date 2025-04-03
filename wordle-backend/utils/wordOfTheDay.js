@@ -1,3 +1,17 @@
+/******************************************************************************************************
+ * File: wordOfTheDay.js
+ * 
+ * Author: Emmanuel Taylor
+ * Created: April 3, 2025
+ * Modified: April 3, 2025
+ * 
+ * Description:
+ *   - Provides a word of the day based on the current date for the Wordle puzzle.
+ * 
+ * Dependences:
+ *   - None
+ ******************************************************************************************************/
+
 const words = ["apple", "brain", "crane", "delta", "eagle"];
 
 function getWordOfTheDay() {

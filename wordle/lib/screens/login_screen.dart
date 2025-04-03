@@ -1,3 +1,23 @@
+/// ****************************************************************************************************
+/// File: login_screen.dart
+///
+/// Author: Emmanuel Taylor
+/// Created: April 3, 2025
+/// Modified: April 3, 2025
+///
+/// Description: 
+///  - User login screen for the Wordle application. Allows entry of user credentials,
+///  - authentication against the backend API and persistence of sessions.
+/// 
+/// Dependencies:
+///  - flutter_dotenv: Loads environment variables from a `.env` file.
+///  - provider: State management for theming and authentication.
+///  - material.dart: Flutter UI framework.
+///  - http: Handles network requests to the backend.
+///  - shared_preferences: Provides persistent local storage for JWT tokens.
+///****************************************************************************************************
+library;
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';

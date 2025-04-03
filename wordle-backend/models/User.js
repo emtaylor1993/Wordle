@@ -1,3 +1,17 @@
+/******************************************************************************************************
+ * File: User.js
+ * 
+ * Author: Emmanuel Taylor
+ * Created: April 3, 2025
+ * Modified: April 3, 2025
+ * 
+ * Description:
+ *   - Mongoose schema for user accounts in the Wordle application.
+ * 
+ * Dependences:
+ *   - mongoose: MongoDB object modeling tool.
+ ******************************************************************************************************/
+
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({

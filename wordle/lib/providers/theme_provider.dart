@@ -1,3 +1,19 @@
+/// ****************************************************************************************************
+/// File: theme_provider.dart
+///
+/// Author: Emmanuel Taylor
+/// Created: April 3, 2025
+/// Modified: April 3, 2025
+///
+/// Description: 
+///  - Manages light/dark theme preferences using local storage through Shared Preferences.
+/// 
+/// Dependencies:
+///  - shared_preferences: Provides persistent local storage for JWT tokens.
+///  - material.dart: Flutter UI framework.
+///****************************************************************************************************
+library;
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -1,3 +1,19 @@
+/******************************************************************************************************
+ * File: authController.js
+ * 
+ * Author: Emmanuel Taylor
+ * Created: April 3, 2025
+ * Modified: April 5, 2025
+ * 
+ * Description:
+ *   - Handles authentication logic for user registration, login, and profile access.
+ * 
+ * Dependences:
+ *   - bcryptjs: Used for hashing and comparing user passwords securely.
+ *   - jsonwebtoken: Used for verifying and decoding JWT tokens.
+ *   - User: Mongoose schema for interacting with user data in MongoDB.
+ ******************************************************************************************************/
+
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
