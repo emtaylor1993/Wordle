@@ -18,6 +18,9 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     streak: { type: Number, default: 0 },
+    bestStreak: { type: Number, default: 0 },
+    gamesPlayed: { type: Number, default: 0},
+    gamesWon: { type: Number, default: 0},
     lastPlayed: { type: String },
     profileImage: { type: String },
 });

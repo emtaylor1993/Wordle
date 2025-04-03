@@ -86,8 +86,12 @@ const submitGuess = async (req, res) => {
             game.isFailed = true;
         }
 
+        const isFinalGuess = game.guessHistory.length >= 6;
+
         if (normalizedGuess === word) {
             game.isSolved = true;
+            user.gamesWon = (user.gamesWon || 0) + 1;
+            user.gamesPlayed = (user.gamesPlayed || 0) + 1;
 
             if (user.lastPlayed === date) {
 
@@ -97,6 +101,18 @@ const submitGuess = async (req, res) => {
                 user.streak = 1;
             }
 
+            if (!user.bestStreak || user.streak > user.bestStreak) {
+                user.bestStreak = user.streak;
+            }
+
+            user.lastPlayed = date;
+            await user.save();
+        }
+
+        if (isFinalGuess && normalizedGuess !== word) {
+            game.isFailed = true;
+            user.gamesPlayed = (user.gamesPlayed || 0) + 1;
+            user.streak = 0;
             user.lastPlayed = date;
             await user.save();
         }
@@ -109,7 +125,10 @@ const submitGuess = async (req, res) => {
             isSolved: game.isSolved, 
             attempts: game.guessHistory.length, 
             correctWord: word,
-            streak: game.isSolved ? user.streak : undefined
+            streak: game.isSolved ? user.streak : undefined,
+            gamesPlayed: user.gamesPlayed,
+            gamesWon: user.gamesWon,
+            bestStreak: user.bestStreak,
         });
     } catch (err) {
         console.error(err);

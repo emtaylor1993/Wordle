@@ -17,6 +17,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Game = require("../models/Game");
 
 exports.signup = async (req, res) => {
     try {
@@ -56,15 +57,49 @@ exports.getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.userId).select("-passwordHash");
         if (!user) return res.status(404).json({ error: "User Not Found" });
+
+        const games = await Game.find({ userId: user._id });
+        const totalGames = games.length;
+        const wins = games.filter(g => g.isSolved).length;
+        const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : 0;
+        const totalGuessesInWins = games.filter(g => g.isSolved).reduce((sum, g) => sum + g.guessHistory.length, 0);
+        const avgGuesses = wins > 0 ? (totalGuessesInWins / wins).toFixed(1) : 0;
+
+        let currentStreak = 0;
+        let maxStreak = 0;
+
+        const sortedGames = games.filter(g => g.isSolved).map(g => g.date).sort();
+
+        for (let i = 0; i < sortedGames.length; i++) {
+            if (i === 0 || isYesterday(sortedGames[i - 1], sortedGames[i])) {
+                currentStreak++;
+                maxStreak = Math.max(maxStreak, currentStreak);
+            } else {
+                currentStreak = 1;
+            }
+        }
+
         res.json({
             username: user.username,
             streak: user.streak,
             profileImage: user.profileImage || null,
+            totalGames,
+            wins,
+            winRate,
+            avgGuesses,
+            maxStreak,
         });
     } catch (err) {
         res.status(500).json({ error: "Failed to Fetch User" });
     }
 };
+
+function isYesterday(prev, current) {
+    const prevDate = new Date(prev);
+    const currDate = new Date(current);
+    const diff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
+    return diff === 1;
+}
 
 exports.uploadProfileImage = async (reg, res) => {
     try {
