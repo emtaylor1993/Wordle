@@ -24,9 +24,11 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const { signup, login, getProfile } = require("../controllers/authController");
+const upload = require("../middleware/uploadMiddleware");
+const { uploadProfileImage } = require("../controllers/authController");
 
 router.post("/signup", signup);
 router.post("/login", login);
 router.get("/profile", authMiddleware, getProfile);
-
+router.post("/upload", authMiddleware, upload.single("image"), uploadProfileImage);
 module.exports = router;

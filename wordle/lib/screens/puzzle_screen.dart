@@ -192,6 +192,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         title: const Text("Wordle"),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.of(context).pushNamed('/profile');
+            },
+            tooltip: 'Profile',
+          ),
+          IconButton(
             icon: Icon(
               Provider.of<ThemeProvider>(context).isDarkMode ? Icons.light_mode : Icons.dark_mode,
             ),

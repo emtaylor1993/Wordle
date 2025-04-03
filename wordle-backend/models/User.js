@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema({
     passwordHash: { type: String, required: true },
     streak: { type: Number, default: 0 },
     lastPlayed: { type: String },
+    profileImage: { type: String },
 });
 
 module.exports = mongoose.model("User", userSchema);

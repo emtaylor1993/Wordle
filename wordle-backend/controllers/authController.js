@@ -56,8 +56,26 @@ exports.getProfile = async (req, res) => {
     try {
         const user = await User.findById(req.userId).select("-passwordHash");
         if (!user) return res.status(404).json({ error: "User Not Found" });
-        res.json(user);
+        res.json({
+            username: user.username,
+            streak: user.streak,
+            profileImage: user.profileImage || null,
+        });
     } catch (err) {
         res.status(500).json({ error: "Failed to Fetch User" });
     }
 };
+
+exports.uploadProfileImage = async (reg, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.userId,
+            { profileImage: req.file.path },
+            { new: true }
+        ).select("-passwordHash");
+        res.json(user);
+    } catch (err) {
+        console.error("Upload Error: ", err);
+        res.status(500).json({ error: "Failed to Upload Profile Image" });
+    }
+}

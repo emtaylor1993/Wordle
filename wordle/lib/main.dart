@@ -24,7 +24,7 @@ import 'package:wordle/providers/auth_provider.dart';
 import 'package:wordle/screens/login_screen.dart';
 import 'package:wordle/screens/signup_screen.dart';
 import 'package:wordle/screens/puzzle_screen.dart';
-// import 'package:wordle/screens/profile_screen.dart';
+import 'package:wordle/screens/profile_screen.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -61,7 +61,7 @@ class WordleApp extends StatelessWidget {
               '/login': (context) => const LoginScreen(),
               '/signup': (context) => const SignupScreen(),
               '/puzzle': (context) => const PuzzleScreen(),
-              // '/profile': (context) => const ProfileScreen(),
+              '/profile': (context) => const ProfileScreen(),
             },
           );
         },
