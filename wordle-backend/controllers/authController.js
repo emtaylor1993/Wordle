@@ -12,7 +12,7 @@ exports.signup = async (req, res) => {
         const passwordHash = await bcrypt.hash(password, 10);
         const user = await User.create({ username, passwordHash });
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-        res.status(201).json({ token, username: user.username });
+        res.status(200).json({ token, username: user.username });
     } catch (err) {
         console.error("Signup Error: ", err);
         res.status(500).json({ error: "Signup Failed" });

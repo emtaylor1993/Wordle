@@ -15,7 +15,14 @@ const getTodayPuzzle = async (req, res) => {
             game = await Game.create({ userId, date, guessHistory: [] });
         }
 
-        res.json({ date, guesses: game.guessHistory, isSolved: game.isSolved });
+        res.json({ 
+            date: game.date, 
+            guesses: game.guessHistory.map(g => ({
+                guess: g.word,
+                feedback: g.feedback
+            })), 
+            isSolved: game.isSolved 
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to Fetch Today's Puzzle" });
@@ -49,11 +56,14 @@ const submitGuess = async (req, res) => {
             else return "Incorrect";
         });
 
-        if (game.guessHistory.includes(normalizedGuess)) {
+        if (game.guessHistory.some(g => g.word === normalizedGuess)) {
             return res.status(400).json({ error: "You Already Guessed This Word" });
         }
 
-        game.guessHistory.push(normalizedGuess);
+        game.guessHistory.push({
+            word: normalizedGuess,
+            feedback: feedback
+        });
 
         if (game.guessHistory.length >= 6 && normalizedGuess !== word) {
             game.isFailed = true;
