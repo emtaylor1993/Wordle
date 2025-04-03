@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -90,7 +91,8 @@ class _SignupScreenState extends State<SignupScreen> {
     final password = _passwordController.text.trim();
 
     try {
-      final uri = Uri.parse("http://localhost:3000/api/auth/signup");
+      final baseUrl = dotenv.env['API_BASE_URL'];
+      final uri = Uri.parse("$baseUrl:3000/api/auth/signup");
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},

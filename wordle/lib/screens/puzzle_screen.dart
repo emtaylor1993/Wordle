@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -15,9 +17,21 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   List<Map<String, dynamic>> _guesses = [];
   bool _isLoading = true;
   bool _isSubmitting = false;
+  bool _isSolved = false;
+  bool _isFailed = false;
   String? _error;
 
+
+  bool get isMobile {
+    try {
+      return Platform.isAndroid || Platform.isIOS;
+    } catch (_) {
+      return false;
+    }
+  }
+
   final TextEditingController _guessController = TextEditingController();
+  final baseUrl = dotenv.env['API_BASE_URL'];
 
   @override
   void initState() {
@@ -32,7 +46,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     });
 
     final token = Provider.of<AuthProvider>(context, listen: false).token;
-    final uri = Uri.parse("http://localhost:3000/api/puzzle/today");
+    final uri = Uri.parse("$baseUrl:3000/api/puzzle/today");
 
     try {
       final res = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
@@ -41,7 +55,14 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         final data = jsonDecode(res.body);
         setState(() {
           _guesses = List<Map<String, dynamic>>.from(data['guesses']);
+          _isSolved = data['isSolved'] ?? false;
+          _isFailed = _guesses.length >= 6 && !_isSolved;
         });
+        if (_isSolved) {
+          _showEndgameDialog("🎉 You solved it in ${_guesses.length} guess${_guesses.length == 1 ? '' : 'es'}!");
+        } else if (_isFailed) {
+          _showEndgameDialog("😢 You’re out of attempts.\nTry again tomorrow!");
+        }
       } else {
         setState(() {
           _error = jsonDecode(res.body)['error'] ?? "Failed to Fetch Puzzle";
@@ -67,7 +88,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     });
 
     final token = Provider.of<AuthProvider>(context, listen: false).token;
-    final uri = Uri.parse("http://localhost:3000/api/puzzle/guess");
+    final uri = Uri.parse("$baseUrl:3000/api/puzzle/guess");
 
     try {
       final res = await http.post(
@@ -91,6 +112,27 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     } finally {
       setState(() => _isSubmitting = false);
     }
+  }
+
+  void _showEndgameDialog(String message) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          title: const Text("Game Over"),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("OK"),
+            )
+          ],
+        ),
+      );
+    });
   }
 
   @override
@@ -182,12 +224,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                 Expanded(
                   child: TextField(
                     controller: _guessController,
+                    enabled: !_isSolved && !_isFailed,
                     decoration: const InputDecoration(hintText: "Enter your guess"),
                   ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: (_isLoading || _isSubmitting) ? null : _submitGuess,
+                  onPressed: (_isLoading || _isSubmitting || _isSolved || _isFailed) ? null : _submitGuess,
                   child: _isSubmitting
                     ? const SizedBox(
                       width: 16,
@@ -198,6 +241,61 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                 ),
               ],
             ),
+            if (isMobile && !_isSolved && !_isFailed)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Column(
+                  children: [
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: 'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map((char) {
+                        return ElevatedButton(
+                          onPressed: () {
+                            if (_guessController.text.length < 5) {
+                              setState(() {
+                                _guessController.text += char.toLowerCase();
+                              });
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(40, 40),
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: Text(char),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            if (_guessController.text.isNotEmpty) {
+                              setState(() {
+                                _guessController.text = _guessController.text
+                                    .substring(0, _guessController.text.length - 1);
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.backspace),
+                          label: const Text("Backspace"),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: (_isLoading || _isSubmitting)
+                              ? null
+                              : _submitGuess,
+                          icon: const Icon(Icons.send),
+                          label: const Text("Submit"),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
 import 'package:wordle/screens/login_screen.dart';
@@ -6,7 +7,8 @@ import 'package:wordle/screens/signup_screen.dart';
 import 'package:wordle/screens/puzzle_screen.dart';
 // import 'package:wordle/screens/profile_screen.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const WordleApp());
 }
 
