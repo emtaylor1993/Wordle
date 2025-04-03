@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'providers/theme_provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
 import 'package:wordle/screens/login_screen.dart';
 import 'package:wordle/screens/signup_screen.dart';
@@ -9,7 +10,15 @@ import 'package:wordle/screens/puzzle_screen.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
-  runApp(const WordleApp());
+  // runApp(const WordleApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: const WordleApp(),
+    ),
+  );
 }
 
 class WordleApp extends StatelessWidget {
@@ -17,6 +26,8 @@ class WordleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return ChangeNotifierProvider(
       create: (_) => AuthProvider()..loadToken(),
       child: Consumer<AuthProvider>(
@@ -24,7 +35,9 @@ class WordleApp extends StatelessWidget {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Wordle Game',
-            theme: ThemeData.dark(),
+            themeMode: themeProvider.currentTheme,
+            theme: ThemeData.light(useMaterial3: true),
+            darkTheme: ThemeData.dark(useMaterial3: true),
             home: authProvider.isAuthenticated ? const PuzzleScreen() : const LoginScreen(),
             routes: {
               '/login': (context) => const LoginScreen(),
