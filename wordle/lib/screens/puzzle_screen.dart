@@ -122,12 +122,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
             // Guess history
             Expanded(
-              child: ListView.builder(
-                itemCount: _guesses.length,
-                itemBuilder: (context, index) {
-                  final entry = _guesses[index];
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(6, (rowIndex) {
+                  final entry = rowIndex < _guesses.length
+                      ? _guesses[rowIndex]
+                      : {'guess': '', 'feedback': List.filled(5, 'absent')};
 
-                  // Safe defaults
                   final guess = (entry['guess'] ?? '').padRight(5).toUpperCase();
                   final feedback = entry['feedback'] ?? List.filled(5, 'absent');
 
@@ -146,7 +147,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                           color = Colors.orange.shade400;
                           break;
                         default:
-                          color = Colors.grey;
+                          color = Colors.blueGrey;
                       }
 
                       return Container(
@@ -155,21 +156,21 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                         height: 48,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: color,
+                          color: rowIndex < _guesses.length ? color : Colors.transparent,
+                          border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           letter,
                           style: const TextStyle(
                             fontSize: 20,
-                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       );
                     }),
                   );
-                },
+                }),
               ),
             ),
 
