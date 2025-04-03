@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -20,6 +21,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   bool _isSubmitting = false;
   bool _isSolved = false;
   bool _isFailed = false;
+  bool _isAnimating = false;
   String? _error;
 
 
@@ -85,6 +87,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
     setState(() {
       _isSubmitting = true;
+      _isAnimating = true;
       _error = null;
     });
 
@@ -103,6 +106,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
       if (res.statusCode == 200) {
         _guessController.clear();
+        await Future.delayed(const Duration(milliseconds: 50));
+        await Future.delayed(const Duration(milliseconds: 750));
         await _fetchPuzzle();
       } else {
         final errorMsg = jsonDecode(res.body)['error'];
@@ -111,7 +116,10 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     } catch (e) {
       setState(() => _error = "Network Error");
     } finally {
-      setState(() => _isSubmitting = false);
+      setState(() {
+        _isSubmitting = false;
+        _isAnimating = false;
+      });
     }
   }
 
@@ -177,8 +185,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(6, (rowIndex) {
                   final entry = rowIndex < _guesses.length
-                      ? _guesses[rowIndex]
-                      : {'guess': '', 'feedback': List.filled(5, 'absent')};
+                    ? _guesses[rowIndex]
+                    : {'guess': '', 'feedback': List.filled(5, 'absent')};
 
                   final guess = (entry['guess'] ?? '').padRight(5).toUpperCase();
                   final feedback = entry['feedback'] ?? List.filled(5, 'absent');
@@ -201,21 +209,47 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                           color = Colors.blueGrey;
                       }
 
-                      return Container(
-                        margin: const EdgeInsets.all(4),
-                        width: 48,
-                        height: 48,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: rowIndex < _guesses.length ? color : Colors.transparent,
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          letter,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                      return AnimatedSwitcher(
+                        duration: Duration(milliseconds: 300 + (i * 100)),
+                        transitionBuilder: (child, animation) {
+                          final rotateAnim = Tween(begin: pi, end: 0.0).animate(animation);
+                          return AnimatedBuilder(
+                            animation: rotateAnim,
+                            child: child,
+                            builder: (context, child) {
+                              final isUnderHalf = rotateAnim.value < pi / 2;
+                              return Transform(
+                                alignment: Alignment.center,
+                                transform: Matrix4.rotationX(rotateAnim.value),
+                                child: isUnderHalf ? child : const SizedBox.shrink(),
+                              );
+                            },
+                          );
+                        },
+                        child: Container(
+                          key: ValueKey("${entry['guess']}_${entry['feedback']?[i] ?? ''}_$i"), // Forces animation on change
+                          width: 50,
+                          height: 50,
+                          margin: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withAlpha((0.2 * 255).toInt()),
+                                blurRadius: 4,
+                                offset: const Offset(2, 2),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            letter,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       );
@@ -239,7 +273,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: (_isLoading || _isSubmitting || _isSolved || _isFailed) ? null : _submitGuess,
+                  onPressed: (_isLoading || _isSubmitting || _isSolved || _isFailed || _isAnimating) ? null : _submitGuess,
                   child: _isSubmitting
                     ? const SizedBox(
                       width: 16,
