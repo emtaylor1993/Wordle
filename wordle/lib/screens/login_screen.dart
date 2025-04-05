@@ -28,6 +28,7 @@ import 'package:wordle/utils/navigation_helper.dart';
 import '../providers/auth_provider.dart';
 import '../screens/signup_screen.dart';
 import '../utils/snackbar_helper.dart';
+import '../widgets/app_bar.dart';
 
 /// [LoginScreen] is a `StatefulWidget` used for login functionality.
 /// Displays form fields and manages authentication state.
@@ -47,22 +48,31 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _hasShownSuccessMessage = false;
 
-  /// Builds the login UI and shows a success snackbar if redirected after signup.
   @override
-  Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+  void initState() {
+    super.initState();
 
-    // Show login success message only once if passed via a route argument.
-    if (args != null && !_hasShownSuccessMessage && args['success'] != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+      // Show login success message only once if passed via a route argument.
+      if (args != null && args['success'] != null && !_hasShownSuccessMessage) {
         showSnackBar(context, args['success']);
         setState(() {
           _hasShownSuccessMessage = true;
         });
-      });
-    }
+      }
+    });
+  }
 
+  /// Builds the login UI and shows a success snackbar if redirected after signup.
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
+      appBar: buildAppBar(
+        context: context,
+        title: "",
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

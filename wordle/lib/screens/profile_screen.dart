@@ -25,8 +25,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:wordle/utils/navigation_helper.dart';
 import '../providers/auth_provider.dart';
+import '../screens/login_screen.dart';
 import '../utils/snackbar_helper.dart';
+import '../widgets/app_bar.dart';
 
 /// [ProfileScreen] is a `StatefulWidget` used for profile viewing functionality.
 class ProfileScreen extends StatefulWidget {
@@ -123,8 +126,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile"),
+      appBar: buildAppBar(
+        context: context,
+        title: "Profile",
+        additionalActions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              Provider.of<AuthProvider>(context, listen: false).logout();
+              navigateWithSlideReplace(
+                context,
+                const LoginScreen(),
+                direction: SlideDirection.leftToRight,
+                arguments: {'success': 'Logged Out Successfully!'},
+                clearStack: true,
+              );
+            },
+          ),
+        ],
       ),
       body: Center(
         child: _isLoading
