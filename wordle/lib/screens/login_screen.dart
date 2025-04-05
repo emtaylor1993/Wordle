@@ -23,7 +23,10 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:wordle/screens/puzzle_screen.dart';
+import 'package:wordle/utils/navigation_helper.dart';
 import '../providers/auth_provider.dart';
+import '../screens/signup_screen.dart';
 import '../utils/snackbar_helper.dart';
 
 /// [LoginScreen] is a `StatefulWidget` used for login functionality.
@@ -70,7 +73,12 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Login", style: Theme.of(context).textTheme.headlineMedium),
+                  Text(
+                    "Login", 
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    )
+                  ),
                   const SizedBox(height: 24),
 
                   // Username field.
@@ -103,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Signup link.
                   TextButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/signup');
+                      navigateWithSlide(context, const SignupScreen());
                     },
                     child: const Text("Don't have an account? Sign up"),
                   )
@@ -141,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
         await Provider.of<AuthProvider>(context, listen: false).login(token);
         if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/puzzle');
+        navigateWithSlideReplace(context, const PuzzleScreen());
       } else {
         final errorMsg = jsonDecode(response.body)['error'];
         if (!mounted) return;

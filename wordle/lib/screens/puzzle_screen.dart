@@ -23,6 +23,7 @@ library;
 
 import 'dart:convert';
 import 'dart:math';
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -30,7 +31,10 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../screens/login_screen.dart';
+import '../screens/profile_screen.dart';
 import '../utils/snackbar_helper.dart';
+import '../utils/navigation_helper.dart';
 
 /// [PuzzleScreen] is a `StatefulWidget` used for puzzle functionality.
 class PuzzleScreen extends StatefulWidget {
@@ -49,6 +53,9 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   bool _isFailed = false;
   bool _isAnimating = false;
 
+  Duration _timeUntilNextPuzzle = const Duration();
+  Timer? _countdownTimer;
+
   bool get isMobile {
     try {
       return Platform.isAndroid || Platform.isIOS;
@@ -65,6 +72,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   void initState() {
     super.initState();
     _fetchPuzzle();
+    _startCountdownTimer();
   }
 
   /// Fetches the current puzzle state for the user from the backend. Sets the grid state
@@ -194,6 +202,37 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     );
   }
 
+  void _startCountdownTimer() {
+    final now = DateTime.now();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+
+    setState(() {
+      _timeUntilNextPuzzle = nextMidnight.difference(now);
+    });
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      final now = DateTime.now();
+      final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+      setState(() {
+        _timeUntilNextPuzzle = nextMidnight.difference(now);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+  
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours.toString().padLeft(2, '0');
+    final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+    return "$hours:$minutes:$seconds";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -203,7 +242,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              Navigator.of(context).pushNamed('/profile');
+              navigateWithSlide(context, const ProfileScreen());
             },
             tooltip: 'Profile',
           ),
@@ -219,7 +258,12 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
             icon: const Icon(Icons.logout),
             onPressed: () {
               Provider.of<AuthProvider>(context, listen: false).logout();
-              Navigator.of(context).pushReplacementNamed('/login');
+              navigateWithSlideReplace(
+                context,
+                const LoginScreen(),
+                direction: SlideDirection.leftToRight,
+                arguments: {'success': 'You Have Been Logged Out'},
+              );
             },
             tooltip: 'Logout',
           ),
@@ -229,8 +273,23 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const SizedBox(height: 16),
-
+            SizedBox(
+              height: 24,
+              child: AnimatedOpacity(
+                opacity: (_isSolved || _isFailed) ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Center(
+                  child: Text(
+                    "Next Puzzle: ${_formatDuration(_timeUntilNextPuzzle)}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             // Guess history
             Expanded(
               child: Column(

@@ -23,7 +23,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:wordle/utils/navigation_helper.dart';
 import '../providers/auth_provider.dart';
+import '../screens/login_screen.dart';
 import '../utils/snackbar_helper.dart';
 
 /// [SignupScreen] is a `StatefulWidget` used for signup functionality.
@@ -56,8 +58,12 @@ class _SignupScreenState extends State<SignupScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("Sign Up", style: Theme.of(context).textTheme.headlineMedium),
-                  const SizedBox(height: 24),
+                  Text(
+                    "Sign Up", 
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    )
+                  ),                  const SizedBox(height: 24),
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: "Username"),
@@ -81,7 +87,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/login');
+                      navigateWithSlideReplace(context, const LoginScreen(), direction: SlideDirection.leftToRight);
                     },
                     child: const Text("Already have an account? Log in"),
                   )
@@ -123,10 +129,11 @@ class _SignupScreenState extends State<SignupScreen> {
         await Provider.of<AuthProvider>(context, listen: false).login(token);
 
         if (!mounted) return;
-        Navigator.pushReplacementNamed(
+        navigateWithSlideReplace(
           context, 
-          '/login',
-          arguments: {'success': 'Signup Successful!'},
+          const LoginScreen(), 
+          direction: SlideDirection.leftToRight,
+          arguments: {'success': 'Signup Successful!'}
         );
       } else {
         final errorMsg = jsonDecode(response.body)['error'];
