@@ -94,14 +94,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null) return;
 
+    final bytes = await pickedFile.readAsBytes();
+    final fileName = pickedFile.name;
+
     if (!mounted) return;
     final token = Provider.of<AuthProvider>(context, listen: false).token;
-    final uri = Uri.parse("$baseUrl:3000/api/auth/profile-image");
+    final uri = Uri.parse("$baseUrl:3000/api/auth/upload");
 
     try {
       final request = http.MultipartRequest("POST", uri)
         ..headers['Authorization'] = 'Bearer $token'
-        ..files.add(await http.MultipartFile.fromPath("image", pickedFile.path));
+        ..files.add(await http.MultipartFile.fromBytes("image", bytes, filename: fileName));
 
       final response = await request.send();
 
@@ -142,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         CircleAvatar(
                           radius: 48,
                           backgroundImage: _profileImage != null
-                              ? NetworkImage("http://localhost:3000/$_profileImage")
+                              ? NetworkImage("$baseUrl:3000/$_profileImage")
                               : const AssetImage("assets/default_avatar.png") as ImageProvider,
                         ),
                         const SizedBox(height: 12),

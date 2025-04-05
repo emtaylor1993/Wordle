@@ -36,5 +36,15 @@ services:
     environment:
       - MONGO_URI=${MONGO_URI_DOCKER}
       - JWT_SECRET=${JWT_SECRET}
+
+  frontend:
+    build: ./wordle
+    container_name: wordle-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
 volumes:
   mongo-data:
