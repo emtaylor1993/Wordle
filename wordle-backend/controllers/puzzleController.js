@@ -18,7 +18,7 @@
 
 const User = require("../models/User");
 const Game = require("../models/Game");
-const getWordOfTheDay = require("../utils/wordOfTheDay");
+const { getWordOfTheDay, words } = require("../utils/wordOfTheDay");
 const { isYesterday } = require("../utils/dateHelpers");
 
 /**
@@ -65,11 +65,16 @@ const submitGuess = async (req, res) => {
     const { guess } = req.body;
     const date = new Date().toISOString().split("T")[0];
     const word = getWordOfTheDay();
-    const normalizedGuess = guess.toLowerCase();
+    const normalizedGuess = guess?.toLowerCase();
 
     // Validate guess format.
     if (!normalizedGuess || normalizedGuess.length !== word.length) {
         return res.status(400).json({ error: "Invalid Guess" });
+    }
+
+    // Validate whether the guess is a valid dictionary word.
+    if (!words.includes(normalizedGuess)) {
+        return res.status(400).json({ error: "Invalid Word" });
     }
 
     try {

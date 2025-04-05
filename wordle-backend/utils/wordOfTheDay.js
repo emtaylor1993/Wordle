@@ -12,7 +12,11 @@
  *   - None
  ******************************************************************************************************/
 
-const words = ["apple", "brain", "crane", "delta", "eagle"];
+const fs = require("fs");
+const path = require("path");
+
+const wordlistPath = path.join(__dirname, "../data/wordlist.json");
+const words = JSON.parse(fs.readFileSync(wordlistPath, "utf-8"));
 
 /**
  * getWordOfTheDay
@@ -33,4 +37,7 @@ function getWordOfTheDay() {
     return words[index];
 }
 
-module.exports = getWordOfTheDay;
+module.exports = {
+    getWordOfTheDay,
+    words
+  };
