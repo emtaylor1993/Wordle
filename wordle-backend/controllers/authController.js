@@ -141,13 +141,18 @@ function isYesterday(prev, current) {
  * 
  * @access Private (Uses multer middleware)
  */
-exports.uploadProfileImage = async (reg, res) => {
+exports.uploadProfileImage = async (req, res) => {
     try {
+        if (!req.file) {
+            return res.status(400).json({ error: "No File Uploaded" });
+        }
+
         const user = await User.findByIdAndUpdate(
             req.userId,
             { profileImage: req.file.path },
             { new: true }
         ).select("-passwordHash");
+
         res.json(user);
     } catch (err) {
         console.error("Upload Error: ", err);
