@@ -35,6 +35,7 @@ import '../screens/login_screen.dart';
 import '../screens/profile_screen.dart';
 import '../utils/snackbar_helper.dart';
 import '../utils/navigation_helper.dart';
+import '../widgets/shake_widget.dart';
 
 /// [PuzzleScreen] is a `StatefulWidget` used for puzzle functionality.
 class PuzzleScreen extends StatefulWidget {
@@ -52,6 +53,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   bool _isSolved = false;
   bool _isFailed = false;
   bool _isAnimating = false;
+  bool _shouldShake = false;
 
   Duration _timeUntilNextPuzzle = const Duration();
   Timer? _countdownTimer;
@@ -113,6 +115,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   Future<void> _submitGuess() async {
     final guess = _guessController.text.trim().toLowerCase();
     if (guess.length != 5) {
+      setState(() => _shouldShake = true);
       showSnackBar(context, "Guess Must Be 5 Letters", isError: true);
       return;
     }
@@ -150,7 +153,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       } else {
         final errorMsg = jsonDecode(res.body)['error'];
         if (!mounted) return;
-        showSnackBar(context, errorMsg ?? "Login Failed", isError: true);
+        if (errorMsg == "Invalid Word" || errorMsg == "Invalid Guess") {
+          setState(() => _shouldShake = true);
+          Future.delayed(const Duration(milliseconds: 600), () {
+            if (mounted) setState(() => _shouldShake = false);
+          });
+        }
+        showSnackBar(context, errorMsg ?? "Guess Failed", isError: true);
       }
     } catch (e) {
       if (!mounted) return;
@@ -290,83 +299,90 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                 ),
               ),
             ),
-            // Guess history
+
+            // ✅ Add ShakeWidget here
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(6, (rowIndex) {
-                  final entry = rowIndex < _guesses.length
-                    ? _guesses[rowIndex]
-                    : {'guess': '', 'feedback': List.filled(5, 'absent')};
+              child: ShakeWidget(
+                trigger: _shouldShake,
+                onAnimationComplete: () {
+                  setState(() => _shouldShake = false);
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(6, (rowIndex) {
+                    final entry = rowIndex < _guesses.length
+                        ? _guesses[rowIndex]
+                        : {'guess': '', 'feedback': List.filled(5, 'absent')};
 
-                  final guess = (entry['guess'] ?? '').padRight(5).toUpperCase();
-                  final feedback = entry['feedback'] ?? List.filled(5, 'absent');
+                    final guess = (entry['guess'] ?? '').padRight(5).toUpperCase();
+                    final feedback = entry['feedback'] ?? List.filled(5, 'absent');
 
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (i) {
-                      final letter = guess[i];
-                      final result = feedback[i];
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (i) {
+                        final letter = guess[i];
+                        final result = feedback[i];
 
-                      Color color;
-                      switch (result) {
-                        case 'Correct':
-                          color = Colors.green;
-                          break;
-                        case 'Misplaced':
-                          color = Colors.orange.shade400;
-                          break;
-                        default:
-                          color = Colors.blueGrey;
-                      }
+                        Color color;
+                        switch (result) {
+                          case 'Correct':
+                            color = Colors.green;
+                            break;
+                          case 'Misplaced':
+                            color = Colors.orange.shade400;
+                            break;
+                          default:
+                            color = Colors.blueGrey;
+                        }
 
-                      return AnimatedSwitcher(
-                        duration: Duration(milliseconds: 300 + (i * 100)),
-                        transitionBuilder: (child, animation) {
-                          final rotateAnim = Tween(begin: pi, end: 0.0).animate(animation);
-                          return AnimatedBuilder(
-                            animation: rotateAnim,
-                            child: child,
-                            builder: (context, child) {
-                              final isUnderHalf = rotateAnim.value < pi / 2;
-                              return Transform(
-                                alignment: Alignment.center,
-                                transform: Matrix4.rotationX(rotateAnim.value),
-                                child: isUnderHalf ? child : const SizedBox.shrink(),
-                              );
-                            },
-                          );
-                        },
-                        child: Container(
-                          key: ValueKey("${entry['guess']}_${entry['feedback']?[i] ?? ''}_$i"), // Forces animation on change
-                          width: 50,
-                          height: 50,
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: color,
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withAlpha((0.2 * 255).toInt()),
-                                blurRadius: 4,
-                                offset: const Offset(2, 2),
+                        return AnimatedSwitcher(
+                          duration: Duration(milliseconds: 300 + (i * 100)),
+                          transitionBuilder: (child, animation) {
+                            final rotateAnim = Tween(begin: pi, end: 0.0).animate(animation);
+                            return AnimatedBuilder(
+                              animation: rotateAnim,
+                              child: child,
+                              builder: (context, child) {
+                                final isUnderHalf = rotateAnim.value < pi / 2;
+                                return Transform(
+                                  alignment: Alignment.center,
+                                  transform: Matrix4.rotationX(rotateAnim.value),
+                                  child: isUnderHalf ? child : const SizedBox.shrink(),
+                                );
+                              },
+                            );
+                          },
+                          child: Container(
+                            key: ValueKey("$rowIndex-${entry['guess']}_${entry['feedback']?.join() ?? ''}-$i"),
+                            width: 50,
+                            height: 50,
+                            margin: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withAlpha((0.2 * 255).toInt()),
+                                  blurRadius: 4,
+                                  offset: const Offset(2, 2),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              letter,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
-                            ],
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            letter,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
                             ),
                           ),
-                        ),
-                      );
-                    }),
-                  );
-                }),
+                        );
+                      }),
+                    );
+                  }),
+                ),
               ),
             ),
 
@@ -384,17 +400,21 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton(
-                  onPressed: (_isLoading || _isSubmitting || _isSolved || _isFailed || _isAnimating) ? null : _submitGuess,
+                  onPressed: (_isLoading || _isSubmitting || _isSolved || _isFailed || _isAnimating)
+                      ? null
+                      : _submitGuess,
                   child: _isSubmitting
-                    ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                    : const Text("Submit"),
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text("Submit"),
                 ),
               ],
             ),
+
+            // On-screen keyboard (optional)
             if (isMobile && !_isSolved && !_isFailed)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
@@ -429,8 +449,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                           onPressed: () {
                             if (_guessController.text.isNotEmpty) {
                               setState(() {
-                                _guessController.text = _guessController.text
-                                    .substring(0, _guessController.text.length - 1);
+                                _guessController.text =
+                                    _guessController.text.substring(0, _guessController.text.length - 1);
                               });
                             }
                           },
