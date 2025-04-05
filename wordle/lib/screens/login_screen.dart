@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 3, 2025
+/// Modified: April 4, 2025
 ///
 /// Description: 
 ///  - User login screen for the Wordle application. Allows entry of user credentials,
@@ -24,7 +24,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/snackbar_helper.dart';
 
+/// [LoginScreen] is a `StatefulWidget` used for login functionality.
+/// Displays form fields and manages authentication state.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -32,18 +35,29 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
+/// [_LoginScreenState] manages the state of the login screen.
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
-  String? _error;
+  bool _hasShownSuccessMessage = false;
 
+  /// Builds the login UI and shows a success snackbar if redirected after signup.
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-    final successMessage = args != null ? args['success'] as String? : null;
+
+    // Show login success message only once if passed via a route argument.
+    if (args != null && !_hasShownSuccessMessage && args['success'] != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showSnackBar(context, args['success']);
+        setState(() {
+          _hasShownSuccessMessage = true;
+        });
+      });
+    }
 
     return Scaffold(
       body: Center(
@@ -58,19 +72,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   Text("Login", style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 24),
-                  if (successMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        successMessage,
-                        style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
-                      ),
-                    ),
+
+                  // Username field.
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: "Username"),
                     validator: (value) => value!.isEmpty ? "Enter a username" : null,
                   ),
+
+                  // Password field.
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _passwordController,
@@ -79,8 +89,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     validator: (value) => value!.isEmpty ? "Enter a password" : null,
                   ),
                   const SizedBox(height: 24),
-                  if (_error != null)
-                    Text(_error!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+
+                  // Submit button or loading indicator.
                   if (_isLoading)
                     const CircularProgressIndicator()
                   else
@@ -89,6 +99,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text("Login"),
                     ),
                   const SizedBox(height: 12),
+
+                  // Signup link.
                   TextButton(
                     onPressed: () {
                       Navigator.pushNamed(context, '/signup');
@@ -104,12 +116,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  /// Handles login form submission: Calls backend and stores JWT if successful.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
-      _error = null;
     });
 
     final username = _usernameController.text.trim();
@@ -132,10 +144,11 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.pushReplacementNamed(context, '/puzzle');
       } else {
         final errorMsg = jsonDecode(response.body)['error'];
-        setState(() => _error = errorMsg ?? "Login failed");
+        if (!mounted) return;
+        showSnackBar(context, errorMsg ?? "Login Failed", isError: true);
       }
     } catch (e) {
-      setState(() => _error = "Connection error");
+      showSnackBar(context, "Connection Error", isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

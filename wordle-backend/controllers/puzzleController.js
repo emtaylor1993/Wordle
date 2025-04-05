@@ -3,7 +3,7 @@
  * 
  * Author: Emmanuel Taylor
  * Created: April 3, 2025
- * Modified: April 5, 2025
+ * Modified: April 4, 2025
  * 
  * Description:
  *   - Contains controller logic for handling puzzle interactions like retrieving today's puzzle 
@@ -21,6 +21,14 @@ const Game = require("../models/Game");
 const getWordOfTheDay = require("../utils/wordOfTheDay");
 const { isYesterday } = require("../utils/dateHelpers");
 
+/**
+ * @route get /api/puzzle/today
+ * 
+ * Retrieves or initializes today's puzzle for the authenticated user.
+ * Returns existing history and solved status.
+ * 
+ * @access Private (uses authMiddleware) 
+ */
 const getTodayPuzzle = async (req, res) => {
     const userId = req.userId;
     const date = new Date().toISOString().split("T")[0];
@@ -28,16 +36,14 @@ const getTodayPuzzle = async (req, res) => {
     try {
         let game = await Game.findOne({ userId, date });
         
+        // If the user has not played today, create a new game record.
         if (!game) {
             game = await Game.create({ userId, date, guessHistory: [] });
         }
 
         res.json({ 
             date: game.date, 
-            guesses: game.guessHistory.map(g => ({
-                guess: g.word,
-                feedback: g.feedback
-            })), 
+            guesses: game.guessHistory.map(g => ({guess: g.word, feedback: g.feedback})), 
             isSolved: game.isSolved 
         });
     } catch (err) {
@@ -46,6 +52,14 @@ const getTodayPuzzle = async (req, res) => {
     }
 };
 
+/**
+ * @route POST /api/puzzle/guess
+ * 
+ * Handles a user's guess submission. Evaluates feedback, track guesses, 
+ * updates user statistics (streak, wins), and returns feedback and updated state.
+ * 
+ * @access Private (uses authMiddleware)
+ */
 const submitGuess = async (req, res) => {
     const userId = req.userId;
     const { guess } = req.body;
@@ -53,6 +67,7 @@ const submitGuess = async (req, res) => {
     const word = getWordOfTheDay();
     const normalizedGuess = guess.toLowerCase();
 
+    // Validate guess format.
     if (!normalizedGuess || normalizedGuess.length !== word.length) {
         return res.status(400).json({ error: "Invalid Guess" });
     }
@@ -67,20 +82,20 @@ const submitGuess = async (req, res) => {
             return res.status(400).json({ error: "No More Attempts Left" });
         }
 
+        // Generate feedback based on position and character match.
         const feedback = normalizedGuess.split("").map((letter, i) => {
             if (word[i] === letter) return "Correct";
             else if (word.includes(letter)) return "Misplaced";
             else return "Incorrect";
         });
 
+        // Prevent duplicate guesses.
         if (game.guessHistory.some(g => g.word === normalizedGuess)) {
             return res.status(400).json({ error: "You Already Guessed This Word" });
         }
 
-        game.guessHistory.push({
-            word: normalizedGuess,
-            feedback: feedback
-        });
+        // Record the new guess and feedback.
+        game.guessHistory.push({word: normalizedGuess, feedback: feedback});
 
         if (game.guessHistory.length >= 6 && normalizedGuess !== word) {
             game.isFailed = true;
@@ -88,19 +103,21 @@ const submitGuess = async (req, res) => {
 
         const isFinalGuess = game.guessHistory.length >= 6;
 
+        // Handles correct guesses.
         if (normalizedGuess === word) {
             game.isSolved = true;
             user.gamesWon = (user.gamesWon || 0) + 1;
             user.gamesPlayed = (user.gamesPlayed || 0) + 1;
 
             if (user.lastPlayed === date) {
-
+                // ...
             } else if (user.lastPlayed && isYesterday(user.lastPlayed)) {
                 user.streak += 1;
             } else {
                 user.streak = 1;
             }
 
+            // Tracks the user's best streak.
             if (!user.bestStreak || user.streak > user.bestStreak) {
                 user.bestStreak = user.streak;
             }
@@ -109,6 +126,7 @@ const submitGuess = async (req, res) => {
             await user.save();
         }
 
+        // Handles incorrect guesses.
         if (isFinalGuess && normalizedGuess !== word) {
             game.isFailed = true;
             user.gamesPlayed = (user.gamesPlayed || 0) + 1;

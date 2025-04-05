@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 3, 2025
+/// Modified: April 4, 2025
 ///
 /// Description: 
 ///  - Signup sreen for the Wordle app. Allows users to create accounts, submit credentials to
@@ -24,7 +24,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../utils/snackbar_helper.dart';
 
+/// [SignupScreen] is a `StatefulWidget` used for signup functionality.
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -32,14 +34,15 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
+/// [_SignupScreenState] manages the state of the signup screen.
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   
   bool _isLoading = false;
-  String? _error;
 
+  // Renders UI.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,14 +58,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 children: [
                   Text("Sign Up", style: Theme.of(context).textTheme.headlineMedium),
                   const SizedBox(height: 24),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(
-                        _error!,
-                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                      ),
-                    ),
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: "Username"),
@@ -99,12 +94,14 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  /// Handles the form submission and signup logic. It validates the form input, sends a
+  /// request to the backend, stores a token on success and displays error messages via
+  /// snackbar.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
-      _error = null;
     });
 
     final username = _usernameController.text.trim();
@@ -133,10 +130,11 @@ class _SignupScreenState extends State<SignupScreen> {
         );
       } else {
         final errorMsg = jsonDecode(response.body)['error'];
-        setState(() => _error = errorMsg ?? "Signup Failed");
+        if (!mounted) return;
+        showSnackBar(context, errorMsg ?? "Login Failed", isError: true);
       }
     } catch (e) {
-      setState(() => _error = "Connection Error");
+      showSnackBar(context, "Connection Error", isError: true);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -3,7 +3,7 @@
  * 
  * Author: Emmanuel Taylor
  * Created: April 3, 2025
- * Modified: April 3, 2025
+ * Modified: April 4, 2025
  * 
  * Description:
  *   - Defines API routes for the Wordle puzzle logic, including fetching puzzles and
@@ -21,10 +21,17 @@
 
 const express = require("express");
 const router = express.Router();
+
+// Middleware: Protects puzzle routes with authentication.
 const authMiddleware = require("../middleware/authMiddleware");
+
+// Controller functions for puzzle logic.
 const { getTodayPuzzle, submitGuess } = require("../controllers/puzzleController");
 
+// Route to fetch the current day's puzzle and the user's progress.
 router.get("/today", authMiddleware, getTodayPuzzle);
+
+// Route to submit a guess for the current puzzle.
 router.post("/guess", authMiddleware, submitGuess);
 
 module.exports = router;

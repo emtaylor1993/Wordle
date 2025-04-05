@@ -3,7 +3,7 @@
  * 
  * Author: Emmanuel Taylor
  * Created: April 3, 2025
- * Modified: April 3, 2025
+ * Modified: April 4, 2025
  * 
  * Description:
  *   - Mongoose schema for tracking Users' game progress in the Wordle application.
@@ -22,6 +22,7 @@ const gameSchema = new mongoose.Schema({
     isFailed: { type: Boolean, default: false },
 });
 
+// This ensures that each user gets one game per date.
 gameSchema.index({ userId: 1, date: 1}, { unique: true });
 
 module.exports = mongoose.model("Game", gameSchema);

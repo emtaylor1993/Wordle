@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 3, 2025
+/// Modified: April 4, 2025
 ///
 /// Description: 
 ///  - Entry point for the Wordle application. Initializes environment variables, theme
@@ -13,6 +13,7 @@
 ///  - flutter_dotenv: Loads environment variables from a `.env` file.
 ///  - provider: State management for theming and authentication.
 ///  - material.dart: Flutter UI framework.
+///  - screens: Screens for the application.
 ///****************************************************************************************************
 library;
 
@@ -26,6 +27,8 @@ import 'package:wordle/screens/signup_screen.dart';
 import 'package:wordle/screens/puzzle_screen.dart';
 import 'package:wordle/screens/profile_screen.dart';
 
+/// Main entry point for the application. Loads .env variable sand initializes 
+/// the application with Provider state management.
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
   // runApp(const WordleApp());
@@ -39,9 +42,12 @@ Future<void> main() async {
   );
 }
 
+/// Root widget for the Wordle Application. Handles application-wide theme configuration
+/// and routing based on authentication state.
 class WordleApp extends StatelessWidget {
   const WordleApp({super.key});
 
+  // Builds UI.
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);

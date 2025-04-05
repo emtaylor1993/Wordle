@@ -3,7 +3,7 @@
  * 
  * Author: Emmanuel Taylor
  * Created: April 3, 2025
- * Modified: April 3, 2025
+ * Modified: April 4, 2025
  * 
  * Description:
  *   - Defines API for authentication-related routes for the Wordle application, including user
@@ -22,13 +22,20 @@
 
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
-const { signup, login, getProfile } = require("../controllers/authController");
-const upload = require("../middleware/uploadMiddleware");
-const { uploadProfileImage } = require("../controllers/authController");
 
+// Middleware: Route protection and image upload.
+const authMiddleware = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
+
+// Controller helper methods.
+const { signup, login, getProfile, uploadProfileImage } = require("../controllers/authController");
+
+// Public routes that do not require any authentication.
 router.post("/signup", signup);
 router.post("/login", login);
+
+// Protected routes that require authentication.
 router.get("/profile", authMiddleware, getProfile);
 router.post("/upload", authMiddleware, upload.single("image"), uploadProfileImage);
+
 module.exports = router;

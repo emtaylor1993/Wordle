@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 3, 2025
+/// Modified: April 4, 2025
 ///
 /// Description: 
 ///  - Main game screen for the Wordle application. Displays a 6x5 animated grid, handles
@@ -30,7 +30,9 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../utils/snackbar_helper.dart';
 
+/// [PuzzleScreen] is a `StatefulWidget` used for puzzle functionality.
 class PuzzleScreen extends StatefulWidget {
   const PuzzleScreen({super.key});
 
@@ -38,6 +40,7 @@ class PuzzleScreen extends StatefulWidget {
   State<PuzzleScreen> createState() => _PuzzleScreenState();
 }
 
+/// [_PuzzleScreenState] manages the state of the puzzle screen.
 class _PuzzleScreenState extends State<PuzzleScreen> {
   List<Map<String, dynamic>> _guesses = [];
   bool _isLoading = true;
@@ -45,8 +48,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   bool _isSolved = false;
   bool _isFailed = false;
   bool _isAnimating = false;
-  String? _error;
-
 
   bool get isMobile {
     try {
@@ -59,16 +60,19 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   final TextEditingController _guessController = TextEditingController();
   final baseUrl = dotenv.env['API_BASE_URL'];
 
+  /// Called on widget init to load user profile data.
   @override
   void initState() {
     super.initState();
     _fetchPuzzle();
   }
 
+  /// Fetches the current puzzle state for the user from the backend. Sets the grid state
+  /// based on the `guessHistory`, and flags like `_isSolved` or `_isFailed` for UI control.
+  /// It will also show a snackbar error if the request fails.
   Future<void> _fetchPuzzle() async {
     setState(() {
       _isLoading = true;
-      _error = null;
     });
 
     final token = Provider.of<AuthProvider>(context, listen: false).token;
@@ -85,28 +89,29 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           _isFailed = _guesses.length >= 6 && !_isSolved;
         });
       } else {
-        setState(() {
-          _error = jsonDecode(res.body)['error'] ?? "Failed to Fetch Puzzle";
-        });
+        if (!mounted) return;
+        showSnackBar(context, jsonDecode(res.body)['error'] ?? "Failed to Fetch Puzzle", isError: true);
       }
     } catch (e) {
-      setState(() => _error = "Connection Error");
+      if (!mounted) return;
+      showSnackBar(context, "Connection Error", isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  /// Submits the user's guess to the backend. It validates the guess length, sends it to the 
+  /// backend, updates the animation state and triggers win/loss dialog based on response.
   Future<void> _submitGuess() async {
     final guess = _guessController.text.trim().toLowerCase();
     if (guess.length != 5) {
-      setState(() => _error = "Guess must be 5 letters");
+      showSnackBar(context, "Guess Must Be 5 Letters", isError: true);
       return;
     }
 
     setState(() {
       _isSubmitting = true;
       _isAnimating = true;
-      _error = null;
     });
 
     final token = Provider.of<AuthProvider>(context, listen: false).token;
@@ -136,10 +141,12 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         }
       } else {
         final errorMsg = jsonDecode(res.body)['error'];
-        setState(() => _error = errorMsg ?? "Invalid Guess");
+        if (!mounted) return;
+        showSnackBar(context, errorMsg ?? "Login Failed", isError: true);
       }
     } catch (e) {
-      setState(() => _error = "Network Error");
+      if (!mounted) return;
+      showSnackBar(context, "Network Error", isError: true);
     } finally {
       setState(() {
         _isSubmitting = false;
@@ -148,6 +155,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     }
   }
 
+  /// Displays a modal dialog with result of the game. Shows either a win message with the
+  /// streak or the correct word if failed.
   void _showResultDialog({required bool isWin, String? correctWord, int? streak}) {
     showDialog(
       context: context,
@@ -220,11 +229,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            if (_error != null)
-              Text(
-                _error!,
-                style: const TextStyle(color: Colors.red),
-              ),
             const SizedBox(height: 16),
 
             // Guess history
