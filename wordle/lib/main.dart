@@ -20,7 +20,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'providers/theme_provider.dart';
+import 'package:wordle/providers/settings_provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
 import 'package:wordle/screens/login_screen.dart';
 import 'package:wordle/screens/signup_screen.dart';
@@ -35,7 +35,8 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()..loadToken()),
       ],
       child: const WordleApp(),
     ),
@@ -50,28 +51,22 @@ class WordleApp extends StatelessWidget {
   // Builds UI.
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    final settings = Provider.of<SettingsProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
 
-    return ChangeNotifierProvider(
-      create: (_) => AuthProvider()..loadToken(),
-      child: Consumer<AuthProvider>(
-        builder: (context, authProvider, _) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Wordle Game',
-            themeMode: themeProvider.currentTheme,
-            theme: ThemeData.light(useMaterial3: true),
-            darkTheme: ThemeData.dark(useMaterial3: true),
-            home: authProvider.isAuthenticated ? const PuzzleScreen() : const LoginScreen(),
-            routes: {
-              '/login': (context) => const LoginScreen(),
-              '/signup': (context) => const SignupScreen(),
-              '/puzzle': (context) => const PuzzleScreen(),
-              '/profile': (context) => const ProfileScreen(),
-            },
-          );
-        },
-      ),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Wordle Game',
+      themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData.light(useMaterial3: true),
+      darkTheme: ThemeData.dark(useMaterial3: true),
+      home: authProvider.isAuthenticated ? const PuzzleScreen() : const LoginScreen(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/signup': (context) => const SignupScreen(),
+        '/puzzle': (context) => const PuzzleScreen(),
+        '/profile': (context) => const ProfileScreen(),
+      },
     );
   }
 }

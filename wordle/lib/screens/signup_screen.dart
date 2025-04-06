@@ -27,7 +27,6 @@ import 'package:wordle/utils/navigation_helper.dart';
 import '../providers/auth_provider.dart';
 import '../screens/login_screen.dart';
 import '../utils/snackbar_helper.dart';
-import '../widgets/app_bar.dart';
 
 /// [SignupScreen] is a `StatefulWidget` used for signup functionality.
 class SignupScreen extends StatefulWidget {
@@ -49,10 +48,6 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildAppBar(
-        context: context,
-        title: "",
-      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

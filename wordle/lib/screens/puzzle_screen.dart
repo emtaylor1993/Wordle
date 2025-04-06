@@ -30,10 +30,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../screens/login_screen.dart';
-import '../screens/profile_screen.dart';
 import '../utils/snackbar_helper.dart';
-import '../utils/navigation_helper.dart';
+import '../utils/settings_helper.dart';
+import '../utils/auth_helper.dart';
 import '../widgets/shake_widget.dart';
 import '../widgets/app_bar.dart';
 
@@ -248,29 +247,16 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       appBar: buildAppBar(
         context: context,
         title: "Wordle",
-        additionalActions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              navigateWithSlide(context, const ProfileScreen());
-            },
-            tooltip: 'Profile',
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              Provider.of<AuthProvider>(context, listen: false).logout();
-              navigateWithSlideReplace(
-                context,
-                const LoginScreen(),
-                direction: SlideDirection.leftToRight,
-                arguments: {'success': 'You Have Been Logged Out'},
-                clearStack: true,
-              );
-            },
-            tooltip: 'Logout',
-          ),
-        ],
+        onSettingsPressed: () {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (_) => buildSettingsSheet(context),
+          );
+        },
+        onLogoutPressed: () => handleLogout(context),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

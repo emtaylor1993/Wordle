@@ -28,7 +28,6 @@ import 'package:wordle/utils/navigation_helper.dart';
 import '../providers/auth_provider.dart';
 import '../screens/signup_screen.dart';
 import '../utils/snackbar_helper.dart';
-import '../widgets/app_bar.dart';
 
 /// [LoginScreen] is a `StatefulWidget` used for login functionality.
 /// Displays form fields and manages authentication state.
@@ -69,10 +68,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: buildAppBar(
-        context: context,
-        title: "",
-      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
