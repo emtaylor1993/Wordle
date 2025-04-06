@@ -3,48 +3,61 @@
 #
 # Author: Emmanuel Taylor
 # Created: April 3, 2025
-# Modified: April 3, 2025
+# Modified: April 5, 2025
 #
 # Description:
-#   - Defines services for the Wordle backend and MongoDB using Docker Compose.
+#   - Defines services for the Wordle frontend, backend, and MongoDB using Docker Compose. 
 #
 # Dependences:
 #   - MongoDB (Official Docker Image)
 #   - Node.js backend as defined in ./wordle-backend/Dockerfile
+#   - Flutter web frontend served via Nginx, built from ./wordle
 ######################################################################################################
 
 services:
   mongo:
-    image: mongo
-    container_name: wordle-mongo
-    restart: always
+    image: mongo                        # Uses the official MongoDB image.
+    container_name: wordle-mongo        # Name of the MongoDB container.
+    restart: always                     # Ensures Mongo restarts if it crashes.
     ports:
-      - "27017:27017"
+      - "27017:27017"                   # Exposes MongoDB on host.
     volumes:
-      - mongo-data:/data/db
+      - mongo-data:/data/db             # Persists data using a named volume.
 
   backend:
-    build: ./wordle-backend
-    container_name: wordle-backend
+    build: ./wordle-backend             # Builds the backend from the local Dockerfile.
+    container_name: wordle-backend      
     restart: always
     ports:
-      - "3000:3000"
+      - "3000:3000"                     # Exposes backend API.
     depends_on:
-      - mongo
+      - mongo                           # Ensures MongoDB starts before the backend.
     env_file:
-      - ./wordle-backend/.env
+      - ./wordle-backend/.env           # Injects environment variables for the backend.
     environment:
-      - MONGO_URI=${MONGO_URI_DOCKER}
+      - MONGO_URI=${MONGO_URI_DOCKER}   # Use environment variables for connection/configuration.
       - JWT_SECRET=${JWT_SECRET}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
   frontend:
-    build: ./wordle
+    build: ./wordle                     # Builds flutter web frontend.
     container_name: wordle-frontend
     restart: always
     ports:
-      - "8080:80"
+      - "8080:80"                       # Maps flutter web to host port 8080.
     depends_on:
-      - backend
+      - backend                         # Waits for the backend to start.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/index.html"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
 volumes:
-  mongo-data:
+  mongo-data:                           # Persistent volume for MongoDB.

@@ -39,6 +39,11 @@ app.use(express.json());
 // Static Files: Serves uploaded profile images from the /uploads path.
 app.use("/uploads", express.static("uploads"));
 
+// Health check route.
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "OK" });
+})
+
 // Route Mounting: Register authentication and puzzle-related route handlers.
 app.use("/api/auth", authRoutes);
 app.use("/api/puzzle", puzzleRoutes);
