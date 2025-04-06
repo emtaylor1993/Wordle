@@ -35,11 +35,16 @@ function getTodayDate() {
  * @returns {boolean} - True if the date is exactly one day before today.
  */
 function isYesterday(dateStr) {
-    const today = new Date(getTodayDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const input = new Date(dateStr);
-    return input.toDateString() === yesterday.toDateString();
+    try {
+        const today = new Date(getTodayDate());
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const input = new Date(dateStr);
+        
+        return input.toDateString() === yesterday.toDateString();
+    } catch (err) {
+        console.warn("Invalid date passed to isYesterday: ", dateStr);
+    }
 }
 
 module.exports = { getTodayDate, isYesterday };

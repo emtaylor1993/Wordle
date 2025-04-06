@@ -14,6 +14,8 @@
  *   - mongoose: MongoDB object modeling tool.
  *   - cors: Enables cross-origin resource sharing.
  *   - dotenv: Loads environment variables from .env file.
+ *   - helmet: Secures application by setting HTTP headers.
+ *   - compression: Improve performance via compression.
  * 
  * Routes:
  *   - /api/auth: Handles user signup, login, and profile. (authRoutes.js)
@@ -23,23 +25,26 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
+const compression = require("compression");
 
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
 const puzzleRoutes = require("./routes/puzzleRoutes");
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Middleware: Enables CORS to allow requests from different origins.
+// Middleware Stack.
 app.use(cors());
-
-// Middleware: Parses incoming JSON payloads in HTTP request bodies.
 app.use(express.json());
+app.use(helmet());
+app.use(compression());
 
 // Static Files: Serves uploaded profile images from the /uploads path.
 app.use("/uploads", express.static("uploads"));
 
-// Health check route.
+// Health check route. Used by Docker/Kubernetes to verify if the service is running.
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "OK" });
 })
@@ -48,10 +53,17 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/puzzle", puzzleRoutes);
 
+// Global error handler.
+app.use((err, req, res, next) => {
+    console.error("Unhandled Error: ", err.stack);
+    res.status(500).json({ error: "Internal Server Error" });
+});
+
 // MongoDB Connection: Initializes Mongoose and starts the server.
 mongoose.connect(process.env.MONGO_URI).then(() => {
     console.log("MongoDB Connected");
-    app.listen(3000, () => console.log("Server Running on Port 3000"));
+    app.listen(PORT, () => console.log("Server Running on Port 3000"));
 }).catch((err) => {
     console.error("MongoDB Connection Error: ", err);
+    process.exit(1);
 });
