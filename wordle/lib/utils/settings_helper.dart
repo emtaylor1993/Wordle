@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
-import 'snackbar_helper.dart';
 
 Widget buildSettingsSheet(BuildContext context) {
   final settings = Provider.of<SettingsProvider>(context, listen: false);
@@ -22,10 +21,10 @@ Widget buildSettingsSheet(BuildContext context) {
         ),
         SwitchListTile(
           title: const Text("High Contrast Mode"),
-          subtitle: const Text("Improves color accessibility (coming soon)"),
+          subtitle: const Text("Improves color accessibility"),
           value: settings.highContrast,
           onChanged: (_) {
-            showSnackBar(context, "High contrast mode coming soon!");
+            settings.toggleHighContrast();
             Navigator.pop(context);
           },
         ),

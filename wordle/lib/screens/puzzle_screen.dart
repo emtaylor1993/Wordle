@@ -29,10 +29,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:wordle/providers/settings_provider.dart';
 import '../providers/auth_provider.dart';
+import '../screens/profile_screen.dart';
 import '../utils/snackbar_helper.dart';
 import '../utils/settings_helper.dart';
 import '../utils/auth_helper.dart';
+import '../utils/navigation_helper.dart';
 import '../widgets/shake_widget.dart';
 import '../widgets/app_bar.dart';
 
@@ -243,6 +246,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = Provider.of<SettingsProvider>(context);
+
     return Scaffold(
       appBar: buildAppBar(
         context: context,
@@ -257,6 +262,15 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
           );
         },
         onLogoutPressed: () => handleLogout(context),
+        extraActions: [
+          IconButton(
+            icon: const Icon(Icons.account_circle),
+            onPressed: () {
+              navigateWithSlide(context, const ProfileScreen());
+            },
+            tooltip: "Profile",
+          )
+        ]
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -306,10 +320,10 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                         Color color;
                         switch (result) {
                           case 'Correct':
-                            color = Colors.green;
+                            color = settings.highContrast ? Colors.orange : Colors.green;
                             break;
                           case 'Misplaced':
-                            color = Colors.orange.shade400;
+                            color = settings.highContrast ? Colors.blue : Colors.orange.shade400;
                             break;
                           default:
                             color = Colors.blueGrey;
@@ -332,8 +346,10 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                               },
                             );
                           },
-                          child: Container(
+                          child: AnimatedContainer(
                             key: ValueKey("$rowIndex-${entry['guess']}_${entry['feedback']?.join() ?? ''}-$i"),
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
                             width: 50,
                             height: 50,
                             margin: const EdgeInsets.all(4),
@@ -349,13 +365,14 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                               ],
                             ),
                             alignment: Alignment.center,
-                            child: Text(
-                              letter,
-                              style: const TextStyle(
+                            child: AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: settings.highContrast ? Colors.black : Colors.white,
                               ),
+                              child: Text(letter),
                             ),
                           ),
                         );
