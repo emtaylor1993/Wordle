@@ -1,37 +1,45 @@
-/// ****************************************************************************************************
+/// ===============================================================================================
 /// File: main.dart
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 4, 2025
+/// Modified: April 6, 2025
 ///
 /// Description: 
-///  - Entry point for the Wordle application. Initializes environment variables, theme
-///  - theme settings, and routing logic with provider-based state management.
+///  - Entry point for the Wordle Flutter application. Loads environment variables and 
+///  - sets up providers for the global application state. Configures dynamic theme
+///  - switching and conditional naigation based on authentication status.
 /// 
 /// Dependencies:
-///  - flutter_dotenv: Loads environment variables from a `.env` file.
-///  - provider: State management for theming and authentication.
-///  - material.dart: Flutter UI framework.
-///  - screens: Screens for the application.
-///****************************************************************************************************
+///  - flutter/material.dart: Core Flutter UI toolkit.
+///  - flutter_dotenv/flutter_dotenv.dart: Loads environment variables from a `.env` file.
+///  - provider/provider.dart: State management for settings and authentication.
+///  - wordle/providers/*: Settings and authentication implementations.
+///  - wordle/screens/*: Contains application screens.
+/// ===============================================================================================
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-import 'package:wordle/providers/settings_provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
+import 'package:wordle/providers/settings_provider.dart';
 import 'package:wordle/screens/login_screen.dart';
-import 'package:wordle/screens/signup_screen.dart';
-import 'package:wordle/screens/puzzle_screen.dart';
 import 'package:wordle/screens/profile_screen.dart';
+import 'package:wordle/screens/puzzle_screen.dart';
+import 'package:wordle/screens/signup_screen.dart';
 
-/// Main entry point for the application. Loads .env variable sand initializes 
-/// the application with Provider state management.
+/// Main entry point for the Wordle application. Loads environment variables from `.env`
+/// file and initalizes application-wide state providers.
+/// - `SettingsProvider`: Dark mode, accessibility, etc.
+/// - `AuthProvider`: JWT login/session tracking.
 Future<void> main() async {
-  await dotenv.load(fileName: ".env");
-  // runApp(const WordleApp());
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Failed to load .env file: $e");
+  }
+
   runApp(
     MultiProvider(
       providers: [
@@ -43,8 +51,11 @@ Future<void> main() async {
   );
 }
 
-/// Root widget for the Wordle Application. Handles application-wide theme configuration
-/// and routing based on authentication state.
+/// [WordleApp] is the root widget for the Wordle application.
+/// 
+/// - Determines theme based on `SettingsProvider`.
+/// - Decides initial screen based on `AuthProvider` (Login vs. Puzzle).
+/// - Registers named routes for navigation.
 class WordleApp extends StatelessWidget {
   const WordleApp({super.key});
 
@@ -57,10 +68,16 @@ class WordleApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Wordle Game',
+
+      // Uses dark or light theme based on user settings.
       themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData.light(useMaterial3: true),
       darkTheme: ThemeData.dark(useMaterial3: true),
+
+      // If authenticated, go straight to the puzzle screen.
       home: authProvider.isAuthenticated ? const PuzzleScreen() : const LoginScreen(),
+      
+      // Define named routes for screen tarnsitions.
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),

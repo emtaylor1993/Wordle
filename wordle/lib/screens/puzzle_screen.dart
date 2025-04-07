@@ -1,45 +1,50 @@
-/// ****************************************************************************************************
+/// ===============================================================================================
 /// File: puzzle_screen.dart
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 4, 2025
+/// Modified: April 6, 2025
 ///
-/// Description: 
-///  - Main game screen for the Wordle application. Displays a 6x5 animated grid, handles
-///  - user guesses, evaluates feedback, shows win/loss dialogs, and supports dark/light
-///  - theming and mobile/desktop controls.
-/// 
+/// Description:
+///  - Main game screen for the Wordle application.
+///  - Displays a 6x5 animated grid, handles user guesses, evaluates feedback,
+///  - shows win/loss dialogs, and supports dark/light theming and mobile/desktop controls.
+///
 /// Dependencies:
-///  - flutter_dotenv: Loads environment variables from a `.env` file.
-///  - provider: State management for theming and authentication.
-///  - material.dart: Flutter UI framework.
-///  - http: Handles network requests to the backend.
-///  - dart:convert: Used for JSON decoding.
-///  - dart:math: Used for rotation animation.
-///  - dart:io: Platform detection for mobile vs. web.
-///****************************************************************************************************
+///  - dart:async: Used for asynchronous programming tasks.
+///  - dart:convert: Conversion between JSON and other data representations.
+///  - dart:io: Used to determine the platform application is deployed on.
+///  - dart:math: Provides common mathematical functionality.
+///  - flutter/material.dart: Core Flutter UI toolkit.
+///  - flutter_dotenv/flutter_dotenv.dart: Loads environment variables from a `.env` file.
+///  - http/http.dart: Handles network requests to backend.
+///  - provider/provider.dart: State management for settings and authentication.
+///  - wordle/providers/*: Settings and authentication implementations.
+///  - wordle/utils/*: Implementations for authentication, nevigation, settings and snackbar helpers.
+///  - wordle/widgets/*: Implementations for AppBar, primary button and shake widget.
+/// ===============================================================================================
 library;
 
-import 'dart:convert';
-import 'dart:math';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:wordle/providers/auth_provider.dart';
 import 'package:wordle/providers/settings_provider.dart';
-import '../providers/auth_provider.dart';
-import '../screens/profile_screen.dart';
-import '../utils/snackbar_helper.dart';
-import '../utils/settings_helper.dart';
-import '../utils/auth_helper.dart';
-import '../utils/navigation_helper.dart';
-import '../widgets/shake_widget.dart';
-import '../widgets/app_bar.dart';
+import 'package:wordle/screens/profile_screen.dart';
+import 'package:wordle/utils/auth_helper.dart';
+import 'package:wordle/utils/navigation_helper.dart';
+import 'package:wordle/utils/settings_helper.dart';
+import 'package:wordle/utils/snackbar_helper.dart';
+import 'package:wordle/widgets/app_bar.dart';
+import 'package:wordle/widgets/primary_button.dart';
+import 'package:wordle/widgets/shake_widget.dart';
 
-/// [PuzzleScreen] is a `StatefulWidget` used for puzzle functionality.
+/// [PuzzleScreen] is the main StatefulWidget for the Wordle came view..
 class PuzzleScreen extends StatefulWidget {
   const PuzzleScreen({super.key});
 
@@ -47,9 +52,13 @@ class PuzzleScreen extends StatefulWidget {
   State<PuzzleScreen> createState() => _PuzzleScreenState();
 }
 
-/// [_PuzzleScreenState] manages the state of the puzzle screen.
+/// [_PuzzleScreenState] manages the state, animation, and backend interaction for
+/// the Puzzle Screen.
 class _PuzzleScreenState extends State<PuzzleScreen> {
+  // List of past guesses submitted by the user.
   List<Map<String, dynamic>> _guesses = [];
+
+  // Flags to manage the UI state.
   bool _isLoading = true;
   bool _isSubmitting = false;
   bool _isSolved = false;
@@ -57,9 +66,11 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
   bool _isAnimating = false;
   bool _shouldShake = false;
 
+  // Countdown timer for the next puzzle.
   Duration _timeUntilNextPuzzle = const Duration();
   Timer? _countdownTimer;
 
+  // Used to check for mobile-specific behavior.
   bool get isMobile {
     try {
       return Platform.isAndroid || Platform.isIOS;
@@ -79,9 +90,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     _startCountdownTimer();
   }
 
-  /// Fetches the current puzzle state for the user from the backend. Sets the grid state
-  /// based on the `guessHistory`, and flags like `_isSolved` or `_isFailed` for UI control.
-  /// It will also show a snackbar error if the request fails.
+  /// Fetches puzzle data from backend and updates UI state.
   Future<void> _fetchPuzzle() async {
     setState(() {
       _isLoading = true;
@@ -112,8 +121,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     }
   }
 
-  /// Submits the user's guess to the backend. It validates the guess length, sends it to the 
-  /// backend, updates the animation state and triggers win/loss dialog based on response.
+  /// Submtis a guess to the backend and processes the response.
   Future<void> _submitGuess() async {
     final guess = _guessController.text.trim().toLowerCase();
     if (guess.length != 5) {
@@ -174,8 +182,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     }
   }
 
-  /// Displays a modal dialog with result of the game. Shows either a win message with the
-  /// streak or the correct word if failed.
+  /// Displays the win/loss result dialog to the user.
   void _showResultDialog({required bool isWin, String? correctWord, int? streak}) {
     showDialog(
       context: context,
@@ -201,18 +208,17 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: const Text("OK"),
-            ),
+            PrimaryButton(
+              label: "Close",
+              onPressed: Navigator.of(context).pop,
+            )
           ],
         );
       },
     );
   }
 
+  /// Starts a countdown timer until the next puzzle unlocks at midnight.
   void _startCountdownTimer() {
     final now = DateTime.now();
     final nextMidnight = DateTime(now.year, now.month, now.day + 1);
@@ -230,13 +236,8 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
       });
     });
   }
-
-  @override
-  void dispose() {
-    _countdownTimer?.cancel();
-    super.dispose();
-  }
   
+  /// Formats Duration to HH:MM:SS string.
   String _formatDuration(Duration duration) {
     final hours = duration.inHours.toString().padLeft(2, '0');
     final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
@@ -244,6 +245,14 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     return "$hours:$minutes:$seconds";
   }
 
+  /// Cancels the countdown timer when the widget is destroyed.
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  // Builds UI.
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider>(context);
@@ -276,24 +285,44 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            SizedBox(
-              height: 24,
+            AnimatedSlide(
+              offset: (_isSolved || _isFailed) ? Offset.zero : const Offset(0, -0.5),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOut,
               child: AnimatedOpacity(
                 opacity: (_isSolved || _isFailed) ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Center(
-                  child: Text(
-                    "Next Puzzle: ${_formatDuration(_timeUntilNextPuzzle)}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      fontFeatures: [FontFeature.tabularFigures()],
-                    ),
+                duration: const Duration(milliseconds: 500),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(50),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 6,
+                        color: Colors.black.withAlpha((255 * 0.2).round()),
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.access_time, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Next Puzzle in ${_formatDuration(_timeUntilNextPuzzle)}",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-
             // ✅ Add ShakeWidget here
             Expanded(
               child: ShakeWidget(
@@ -396,18 +425,12 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: (_isLoading || _isSubmitting || _isSolved || _isFailed || _isAnimating)
-                      ? null
-                      : _submitGuess,
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text("Submit"),
-                ),
+                PrimaryButton(
+                  label: "Submit",
+                  isLoading: _isSubmitting,
+                  isDisabled: _isSolved || _isFailed || _isAnimating,
+                  onPressed: _submitGuess,
+                )
               ],
             ),
 

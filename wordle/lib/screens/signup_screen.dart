@@ -1,34 +1,41 @@
-/// ****************************************************************************************************
+/// ===============================================================================================
 /// File: signup_screen.dart
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 4, 2025
+/// Modified: April 6, 2025
 ///
-/// Description: 
-///  - Signup sreen for the Wordle app. Allows users to create accounts, submit credentials to
-///  - the backend to recieve a token for authentication.
-/// 
+/// Description:
+///  - Signup screen for the Wordle app. Allows users to create accounts by submitting
+///  - credentials to the backend, which returns a JWT token on success.
+///  - Handles loading UI state, form validation, and user feedback.
+///
 /// Dependencies:
-///  - flutter_dotenv: Loads environment variables from a `.env` file.
-///  - provider: State management for theming and authentication.
-///  - material.dart: Flutter UI framework.
-///  - http: Handles network requests to the backend.
-///  - dart:convert: Used for JSON decoding.
-///****************************************************************************************************
+///  - dart:convert: Conversion between JSON and other data representations.
+///  - flutter/material.dart: Core Flutter UI toolkit.
+///  - flutter_dotenv/flutter_dotenv.dart: Loads environment variables from a `.env` file.
+///  - http/http.dart: Handles network requests to backend.
+///  - provider/provider.dart: State management for settings and authentication.
+///  - wordle/providers/auth_provider.dart: Authentication implementations.
+///  - wordle/screens/login_screen.dart: Implementation of Login Screen.
+///  - wordle/utils/*: Implementations for navigation and snackbar helpers.
+///  - wordle/widgets/primary_button.dart: Implementation for the primary button.
+/// ===============================================================================================
 library;
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:wordle/providers/auth_provider.dart';
+import 'package:wordle/screens/login_screen.dart';
 import 'package:wordle/utils/navigation_helper.dart';
-import '../providers/auth_provider.dart';
-import '../screens/login_screen.dart';
-import '../utils/snackbar_helper.dart';
+import 'package:wordle/utils/snackbar_helper.dart';
+import 'package:wordle/widgets/primary_button.dart';
 
-/// [SignupScreen] is a `StatefulWidget` used for signup functionality.
+/// [SignupScreen] is a `StatefulWidget` that allows users to register 
+/// a new account.
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -36,7 +43,7 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-/// [_SignupScreenState] manages the state of the signup screen.
+/// [_SignupScreenState] manages the form, loading state, and API request logic.
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _usernameController = TextEditingController();
@@ -44,65 +51,7 @@ class _SignupScreenState extends State<SignupScreen> {
   
   bool _isLoading = false;
 
-  // Renders UI.
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Sign Up", 
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    )
-                  ),                  const SizedBox(height: 24),
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(labelText: "Username"),
-                    validator: (value) => value!.isEmpty ? "Enter a username" : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: "Password"),
-                    validator: (value) => value!.isEmpty ? "Enter a password" : null,
-                  ),
-                  const SizedBox(height: 24),
-                  if (_isLoading)
-                    const CircularProgressIndicator()
-                  else
-                    ElevatedButton(
-                      onPressed: _submit,
-                      child: const Text("Create Account"),
-                    ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      navigateWithSlideReplace(context, const LoginScreen(), direction: SlideDirection.leftToRight);
-                    },
-                    child: const Text("Already have an account? Log in"),
-                  )
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Handles the form submission and signup logic. It validates the form input, sends a
-  /// request to the backend, stores a token on success and displays error messages via
-  /// snackbar.
+  /// Validates the form, sends a signup request to the backend, and handles the response.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -147,5 +96,73 @@ class _SignupScreenState extends State<SignupScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  // Renders UI.
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+
+                  // Title.
+                  Text(
+                    "Sign Up", 
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    )
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Username Field.
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(labelText: "Username"),
+                    validator: (value) => value!.isEmpty ? "Enter a username" : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password Field.
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: "Password"),
+                    validator: (value) => value!.isEmpty ? "Enter a password" : null,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Create account button or spinner.
+                  if (_isLoading)
+                    const CircularProgressIndicator()
+                  else
+                    PrimaryButton(
+                      label: "Create Account",
+                      isLoading: _isLoading,
+                      onPressed: _submit,
+                    ),
+                  const SizedBox(height: 12),
+
+                  // Navigation to the Login Page.
+                  TextButton(
+                    onPressed: () {
+                      navigateWithSlideReplace(context, const LoginScreen(), direction: SlideDirection.leftToRight);
+                    },
+                    child: const Text("Already have an account? Log in!", style: TextStyle(fontWeight: FontWeight.bold)),
+                  )
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

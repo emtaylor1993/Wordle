@@ -1,37 +1,40 @@
-/// ****************************************************************************************************
+/// =====================================================================================================
 /// File: profile_screen.dart
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 4, 2025
+/// Modified: April 6, 2025
 ///
 /// Description: 
-///  - Displays the authenticated user's profile including username, streak, profile picture,
-///    and wordle related gameplay statistics. Allows the option to upload a new profile image.
-/// 
+///   - Displays the logged-in user's profile info including username, streak, stats, and profile picture.
+///   - Allows uploading and persisting a new profile image to the backend.
+///
 /// Dependencies:
-///  - flutter_dotenv: Loads environment variables from a `.env` file.
-///  - provider: State management for theming and authentication.
-///  - material.dart: Flutter UI framework.
-///  - http: Handles network requests to the backend.
-///  - image_picker: Allows image selection.
-///  - snackbar_helper: Displays floating feedback messages.
-///****************************************************************************************************
+///  - dart:convert: Conversion between JSON and other data representations.
+///  - flutter/material.dart: Core Flutter UI toolkit.
+///  - flutter_dotenv/flutter_dotenv.dart: Loads environment variables from a `.env` file.
+///  - http/http.dart: Handles network requests to backend.
+///  - image_picker/image_picker.dart: Used to pick a local image from the user's gallery.
+///  - provider/provider.dart: State management for settings and authentication.
+///  - wordle/providers/auth_provider.dart: Authentication implementations.
+///  - wordle/utils/*: Implementations for authentication, settings and snackbar helpers.
+///  - wordle/widgets/app_bar.dart: Shared AppBar with logout and settings actions.
+/// =====================================================================================================
 library;
 
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
-import '../utils/auth_helper.dart';
-import '../utils/snackbar_helper.dart';
-import '../utils/settings_helper.dart';
-import '../widgets/app_bar.dart';
+import 'package:wordle/providers/auth_provider.dart';
+import 'package:wordle/utils/auth_helper.dart';
+import 'package:wordle/utils/settings_helper.dart';
+import 'package:wordle/utils/snackbar_helper.dart';
+import 'package:wordle/widgets/app_bar.dart';
 
-/// [ProfileScreen] is a `StatefulWidget` used for profile viewing functionality.
+/// [ProfileScreen] widget for displaying user information and gameplay statistics.
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -39,28 +42,33 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-/// [_ProfileScreenState] manages the state of the profile screen.
+/// [_ProfileScreenState] state class that handles API fetch, image upload, and UI updates.
 class _ProfileScreenState extends State<ProfileScreen> {
+  // User attributes.
   String? _username;
   int? _streak;
   String? _profileImage;
+
+  // Gameplay statistics.
   int? _totalGames;
   int? _wins;
   double? _winRate;
   double? _avgGuesses;
   int? _maxStreak;
+
   bool _isLoading = true;
 
+  // Load API base URL from the environment variables.
   final baseUrl = dotenv.env['API_BASE_URL'];
 
-  /// Called on widget init to load user profile data.
+  /// Fetches profile data on widget load.
   @override
   void initState() {
     super.initState();
     _fetchProfile();
   }
 
-  /// Fetches profile information from the backend and sets the local state.
+  /// Fetches user profile information from `/api/auth/profile` endpoint.
   Future<void> _fetchProfile() async {
     setState(() => _isLoading = true);
     final token = Provider.of<AuthProvider>(context, listen: false).token;
@@ -91,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  /// Opens the image picker and uploads the selected profile image to the server.
+  /// Allows image upload to the backend from the user's gallery.
   Future<void> _uploadImage() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -107,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final request = http.MultipartRequest("POST", uri)
         ..headers['Authorization'] = 'Bearer $token'
-        ..files.add(await http.MultipartFile.fromBytes("image", bytes, filename: fileName));
+        ..files.add(http.MultipartFile.fromBytes("image", bytes, filename: fileName));
 
       final response = await request.send();
 
@@ -122,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  /// Builds the profile screen UI.
+  /// Builds UI.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// Helper method to display the statistics box.
+  /// Builds a styled statistics tile for label/value display.
   Widget _statTile(String label, String value) {
     return Column(
       children: [
