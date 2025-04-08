@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema({
     gamesWon: { type: Number, default: 0},
     lastPlayed: { type: String },
     profileImage: { type: String },
+    hardMode: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model("User", userSchema);

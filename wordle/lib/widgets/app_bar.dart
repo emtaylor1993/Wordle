@@ -50,7 +50,7 @@ AppBar buildAppBar({
       IconButton(
         icon: const Icon(Icons.logout),
         onPressed: onLogoutPressed,
-        tooltip: "Logout,"
+        tooltip: "Logout",
       )
     ],
   );

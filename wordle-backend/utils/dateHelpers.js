@@ -3,11 +3,11 @@
  * 
  * Author: Emmanuel Taylor
  * Created: April 3, 2025
- * Modified: April 4, 2025
+ * Modified: April 7, 2025
  * 
  * Description:
- *   - Utility functions for date normalization to help with the streak tracking
- *     logic in the Wordle backend.
+ *   - Utility functions for date comparisons and formatting. Supports game logic such as
+ *     identifying "yesterday" for the ability to track streaks.
  * 
  * Dependences:
  *   - None
@@ -40,10 +40,18 @@ function isYesterday(dateStr) {
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
         const input = new Date(dateStr);
-        
-        return input.toDateString() === yesterday.toDateString();
+        const yesterdayString = yesterday.toISOString().split("T")[0];
+        const inputString = input.toISOString().split("T")[0];
+        const result = input.toDateString() === yesterday.toDateString();
+
+        if (!result) {
+            console.log(`[DATEHELPER] Date ${inputString} Isn't Yesterday: Expected: ${yesterdayString}`);
+        }
+
+        return result;
     } catch (err) {
-        console.warn("Invalid date passed to isYesterday: ", dateStr);
+        console.warn(`[DATEHELPER] Invalid Date String Passed to isYesterday: `, dateStr);
+        return false;
     }
 }
 

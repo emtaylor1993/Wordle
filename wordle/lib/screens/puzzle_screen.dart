@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 6, 2025
+/// Modified: April 7, 2025
 ///
 /// Description:
 ///  - Main game screen for the Wordle application.
@@ -90,6 +90,22 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     _startCountdownTimer();
   }
 
+  Map<String, String> _buildAuthHeaders(String token) => {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  };
+
+  Color _getTileColor(String result, bool highContrast) {
+    switch (result) {
+      case 'Correct':
+        return highContrast ? Colors.orange : Colors.green;
+      case 'Misplaced':
+        return highContrast ? Colors.blue : Colors.orange.shade400;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
   /// Fetches puzzle data from backend and updates UI state.
   Future<void> _fetchPuzzle() async {
     setState(() {
@@ -100,7 +116,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     final uri = Uri.parse("$baseUrl:3000/api/puzzle/today");
 
     try {
-      final res = await http.get(uri, headers: {'Authorization': 'Bearer $token'});
+      final res = await http.get(uri, headers: _buildAuthHeaders(token!));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
@@ -114,6 +130,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         showSnackBar(context, jsonDecode(res.body)['error'] ?? "Failed to Fetch Puzzle", isError: true);
       }
     } catch (e) {
+      debugPrint("[PUZZLE] Connection Error: $e");
       if (!mounted) return;
       showSnackBar(context, "Connection Error", isError: true);
     } finally {
@@ -141,10 +158,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     try {
       final res = await http.post(
         uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
+        headers: _buildAuthHeaders(token!),
         body: jsonEncode({'guess': guess}),
       );
 
@@ -172,6 +186,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         showSnackBar(context, errorMsg ?? "Guess Failed", isError: true);
       }
     } catch (e) {
+      debugPrint("[PUZZLE] Network Error: $e");
       if (!mounted) return;
       showSnackBar(context, "Network Error", isError: true);
     } finally {
@@ -267,7 +282,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
-            builder: (_) => buildSettingsSheet(context),
+            builder: (_) => buildSettingsSheet(context, isGameActive: _guesses.isNotEmpty),
           );
         },
         onLogoutPressed: () => handleLogout(context),
@@ -279,7 +294,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
             },
             tooltip: "Profile",
           )
-        ]
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -323,6 +338,37 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                 ),
               ),
             ),
+
+            // Hard Mode Enabled Badge
+            AnimatedSlide(
+              offset: settings.hardMode ? Offset.zero : const Offset(0, -0.3),
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeOut,
+              child: AnimatedOpacity(
+                opacity: settings.hardMode ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOut,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Tooltip(
+                    message: "Hard Mode Enabled",
+                    child: Chip(
+                      label: const Text(
+                        "HARD MODE",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1,
+                          color: Colors.white,
+                        ),
+                      ),
+                      backgroundColor: Colors.redAccent,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             // ✅ Add ShakeWidget here
             Expanded(
               child: ShakeWidget(
@@ -345,18 +391,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                       children: List.generate(5, (i) {
                         final letter = guess[i];
                         final result = feedback[i];
-
-                        Color color;
-                        switch (result) {
-                          case 'Correct':
-                            color = settings.highContrast ? Colors.orange : Colors.green;
-                            break;
-                          case 'Misplaced':
-                            color = settings.highContrast ? Colors.blue : Colors.orange.shade400;
-                            break;
-                          default:
-                            color = Colors.blueGrey;
-                        }
+                        final color = _getTileColor(result, settings.highContrast);
 
                         return AnimatedSwitcher(
                           duration: Duration(milliseconds: 300 + (i * 100)),

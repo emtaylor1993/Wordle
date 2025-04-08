@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 6, 2025
+/// Modified: April 7, 2025
 ///
 /// Description:
 ///   - Login screen for the Wordle app.
@@ -30,6 +30,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
+import 'package:wordle/providers/settings_provider.dart';
 import 'package:wordle/screens/puzzle_screen.dart';
 import 'package:wordle/screens/signup_screen.dart';
 import 'package:wordle/utils/navigation_helper.dart';
@@ -97,6 +98,8 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
         await Provider.of<AuthProvider>(context, listen: false).login(token);
         if (!mounted) return;
+        await Provider.of<SettingsProvider>(context, listen: false).getHardModeFromBackend();
+        if (!mounted) return;
         navigateWithSlideReplace(context, const PuzzleScreen());
       } else {
         final errorMsg = jsonDecode(response.body)['error'];
@@ -104,6 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
         showSnackBar(context, errorMsg ?? "Login Failed", isError: true);
       }
     } catch (e) {
+      debugPrint("[LOGIN] Login Error: $e");
       showSnackBar(context, "Connection Error", isError: true);
     } finally {
       if (mounted) {

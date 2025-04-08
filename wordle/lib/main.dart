@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 6, 2025
+/// Modified: April 7, 2025
 ///
 /// Description: 
 ///  - Entry point for the Wordle Flutter application. Loads environment variables and 
@@ -34,10 +34,13 @@ import 'package:wordle/screens/signup_screen.dart';
 /// - `SettingsProvider`: Dark mode, accessibility, etc.
 /// - `AuthProvider`: JWT login/session tracking.
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   try {
     await dotenv.load(fileName: ".env");
+    debugPrint("[MAIN] .env File Loaded Successfully");    
   } catch (e) {
-    debugPrint("Failed to load .env file: $e");
+    debugPrint("[MAIN] Failed to load .env file: $e");
   }
 
   runApp(
@@ -62,7 +65,7 @@ class WordleApp extends StatelessWidget {
   // Builds UI.
   @override
   Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider>(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
 
     return MaterialApp(
@@ -70,7 +73,7 @@ class WordleApp extends StatelessWidget {
       title: 'Wordle Game',
 
       // Uses dark or light theme based on user settings.
-      themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      themeMode: settingsProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData.light(useMaterial3: true),
       darkTheme: ThemeData.dark(useMaterial3: true),
 

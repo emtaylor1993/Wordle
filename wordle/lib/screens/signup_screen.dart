@@ -29,6 +29,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
+import 'package:wordle/providers/settings_provider.dart';
 import 'package:wordle/screens/login_screen.dart';
 import 'package:wordle/utils/navigation_helper.dart';
 import 'package:wordle/utils/snackbar_helper.dart';
@@ -76,7 +77,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
         if (!mounted) return;
         await Provider.of<AuthProvider>(context, listen: false).login(token);
-
+        if (!mounted) return;
+        await Provider.of<SettingsProvider>(context, listen: false).getHardModeFromBackend();
         if (!mounted) return;
         navigateWithSlideReplace(
           context, 
@@ -90,6 +92,7 @@ class _SignupScreenState extends State<SignupScreen> {
         showSnackBar(context, errorMsg ?? "Login Failed", isError: true);
       }
     } catch (e) {
+      debugPrint("[SIGNUP] Connection Error: $e");
       showSnackBar(context, "Connection Error", isError: true);
     } finally {
       if (mounted) {

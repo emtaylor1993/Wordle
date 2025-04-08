@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 6, 2025
-/// Last Modified: April 6, 2025
+/// Last Modified: April 7, 2025
 ///
 /// Description:
 ///   - Reusable elevated button used throughout the Wordle app.
@@ -71,7 +71,7 @@ class PrimaryButton extends StatelessWidget {
                 Text(label),
               ],
             )
-          : Text(label, style: TextStyle(color: Colors.white,)),
+          : Text(label, style: TextStyle(color: Colors.white)),
     );
   }
 }

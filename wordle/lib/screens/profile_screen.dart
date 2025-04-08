@@ -3,7 +3,7 @@
 ///
 /// Author: Emmanuel Taylor
 /// Created: April 3, 2025
-/// Modified: April 6, 2025
+/// Modified: April 7, 2025
 ///
 /// Description: 
 ///   - Displays the logged-in user's profile info including username, streak, stats, and profile picture.
@@ -91,9 +91,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _avgGuesses = double.tryParse(data['avgGuesses'].toString()) ?? 0.0;
           _maxStreak = data['maxStreak'];
         });
+      } else {
+        if (!mounted) return;
+        showSnackBar(context, "Failed to Fetch Profile", isError: true);
       }
     } catch (e) {
-      debugPrint("Profile fetch error: $e");
+      debugPrint("[PROFILE] Profile Fetch Error: $e");
+      if (!mounted) return;
+      showSnackBar(context, "Failed to Fetch Profile", isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -123,8 +128,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (!mounted) return;
         showSnackBar(context, "Profile Picture Updated!");
         _fetchProfile();
+      } else {
+        if (!mounted) return;
+        showSnackBar(context, "Failed to Upload Image", isError: true);
       }
     } catch (e) {
+      debugPrint("[PROFILE] Upload Error: $e");
       if (!mounted) return;
       showSnackBar(context, "Image Upload Failed: $e", isError: true);
     }

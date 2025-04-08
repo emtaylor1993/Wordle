@@ -3,22 +3,22 @@
  * 
  * Author: Emmanuel Taylor
  * Created: April 3, 2025
- * Modified: April 4, 2025
+ * Modified: April 7, 2025
  * 
  * Description:
  *   - Handles authentication logic for user registration, login, and profile access.
  * 
  * Dependences:
- *   - bcryptjs: Used for hashing and comparing user passwords securely.
+ *   - bcryptjs: Used for hashing and comparing user passwords securely.\
+ *   - Game: Mongoose schema for representing game progress, used for user statistics.
  *   - jsonwebtoken: Used for verifying and decoding JWT tokens.
  *   - User: Mongoose schema for interacting with user data in MongoDB.
- *   - Game: Mongoose schema for representing game progress, used for user statistics.
  ******************************************************************************************************/
 
-const User = require("../models/User");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const Game = require("../models/Game");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
 /**
  * @route POST /api/auth/signup
@@ -38,9 +38,10 @@ exports.signup = async (req, res) => {
         const user = await User.create({ username, passwordHash });
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
         
+        console.log(`[AUTH] New User Registered: ${username}`);
         res.status(200).json({ token, username: user.username });
     } catch (err) {
-        console.error("Signup Error: ", err);
+        console.error("[AUTH] Signup Error: ", err);
         res.status(500).json({ error: "Signup Failed" });
     }
 };
@@ -63,8 +64,11 @@ exports.login = async (req, res) => {
         if (!valid) return res.status(400).json({ error: "Invalid Credentials" });
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+
+        console.log(`[AUTH] Login Successful: ${username}`);
         res.json({ token, username: user.username });
     } catch (err) {
+        console.log("[AUTH] Login Error: ", err);
         res.status(500).json({ error: "Login Failed" });
     }
 };
@@ -113,6 +117,7 @@ exports.getProfile = async (req, res) => {
             maxStreak,
         });
     } catch (err) {
+        console.error("[AUTH] Failed to Fetch Profile: ", err);
         res.status(500).json({ error: "Failed to Fetch User" });
     }
 };
@@ -153,9 +158,54 @@ exports.uploadProfileImage = async (req, res) => {
             { new: true }
         ).select("-passwordHash");
 
+        console.log(`[PROFILE] Uploaded Image for User ${user.username}`);
         res.json(user);
     } catch (err) {
-        console.error("Upload Error: ", err);
+        console.error("[PROFILE] Image Upload Error: ", err);
         res.status(500).json({ error: "Failed to Upload Profile Image" });
+    }
+}
+
+/**
+ * @route PATCH /api/auth/settings
+ * 
+ * Updates user settings like hardMode.
+ * 
+ * @access Private (Requires JWT Token)
+ */
+exports.updateSettings = async (req, res) => {
+    try {
+        const { hardMode } = req.body;
+        const user = await User.findByIdAndUpdate(
+            req.userId,
+            { hardMode },
+            { new: true }
+        ).select("-passwordHash");
+
+        console.log(`[SETTINGS] Updated Hard Mode for ${user.username}: ${hardMode}`);
+        res.json({ success: true, hardMode: user.hardMode });
+    } catch (err) {
+        console.error("[SETTINGS] Failed to Update Settings: ", err);
+        res.status(500).json({ error: "Failed to Update Settings" });
+    }
+}
+
+/**
+ * @route GET /api/auth/settings/hard-mode
+ * 
+ * Returns the user's hard mode setting.
+ * 
+ * @access Private (Requires JWT Token)
+ */
+exports.getHardMode = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select("hardMode");
+        if (!user) return res.status(404).json({ error: "User Not Found" });
+
+        console.log(`[SETTINGS] Fetched Hard Mode for ${user._id}: ${user.hardMode}`);
+        res.json({ hardMode: user.hardMode });
+    } catch (err) {
+        console.error("[SETTINGS] Failed Fetching Hard Mode: ", err);
+        res.status(500).json({ error: "Failed Fetching Hard Mode" });
     }
 }

@@ -3,27 +3,41 @@
  * 
  * Author: Emmanuel Taylor
  * Created: April 3, 2025
- * Modified: April 4, 2025
+ * Modified: April 7, 2025
  * 
  * Description:
- *   - Express middleware to protect certain routes by verifying JWT authentication.
+ *   - Express middleware that protects private routes by verifying JWT tokens.
+ *   - Valid tokens will attach the user ID to the request object (`req.userId`).
  * 
- * Dependences:
- *   - jsonwebtoken: Used for verifying and decoding JWT tokens.
+ * Dependencies:
+ *   - jsonwebtoken: For decoding and verifying JWT tokens.
  ******************************************************************************************************/
 
 const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
-    const token = req.headers.authorization?.split(" ")[1];             // Extract token after 'Bearer '.
-    if (!token) return res.status(401).json({ error: "Unauthorized" }); // No token present.
+    // Extract token from Authorization header: 'Bearer <token>'.
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    
+    // If no token is found, deny access.
+    if (!token) {
+        console.warn("[AUTH] Missing or Malformed Token in Request.");
+        return res.status(401).json({ error: "Unauthorized: Token Required" });
+    }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);      // Validate/Decode token.
-        req.userId = decoded.id;                                        // Attach user ID to request payload.
-        next();                                                         // Continues request.
+        // Verify the token and extract user payload.
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Attach the user ID to the request object for route handlers.
+        req.userId = decoded.id;
+
+        // Allow request to proceed.
+        next();
     } catch {
-        res.status(401).json({ error: "Invalid Token" });               // Token is invalid/expired.
+        console.warn("[AUTH] Token Verification Failed: ", err.message);
+        return res.status(401).json({ error: "Unauthorized: Invalid or Expired Token" });
     }
 };
 
