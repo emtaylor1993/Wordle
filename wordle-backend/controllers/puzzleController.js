@@ -203,4 +203,25 @@ const submitGuess = async (req, res) => {
     }
 };
 
-module.exports = { getTodayPuzzle, submitGuess };
+/**
+ * @route GET /api/puzzle/calendar
+ * 
+ * Returns a list of dates where the user successfully completed the puzzle.
+ * (Used for generating the streak calendar heatmap we use).
+ * 
+ * @access Private (Requires JWT Authentication)
+ */
+const getStreakCalendar = async (req, res) => {
+    const userId = req.userId;
+
+    try {
+        const games = await Game.find({ userId, isSolved: true });
+        const solvedDates = games.map(game => game.date);
+        res.json({ streakDates: solvedDates });
+    } catch (err) {
+        console.error(`[CALENDAR] Failed to fetch streak dates for ${userId}: err`);
+        res.status(500).json({ error: "Failed to fetch calendar data" });
+    }
+};
+
+module.exports = { getTodayPuzzle, submitGuess, getStreakCalendar };

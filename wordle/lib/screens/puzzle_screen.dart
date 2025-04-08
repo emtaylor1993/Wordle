@@ -20,6 +20,7 @@
 ///  - http/http.dart: Handles network requests to backend.
 ///  - provider/provider.dart: State management for settings and authentication.
 ///  - wordle/providers/*: Settings and authentication implementations.
+///  - wordle/screens/*: Implementations for the profile and statistics screens.
 ///  - wordle/utils/*: Implementations for authentication, nevigation, settings and snackbar helpers.
 ///  - wordle/widgets/*: Implementations for AppBar, primary button and shake widget.
 /// ===============================================================================================
@@ -36,6 +37,7 @@ import 'package:provider/provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
 import 'package:wordle/providers/settings_provider.dart';
 import 'package:wordle/screens/profile_screen.dart';
+import 'package:wordle/screens/statistics_screen.dart';
 import 'package:wordle/utils/auth_helper.dart';
 import 'package:wordle/utils/navigation_helper.dart';
 import 'package:wordle/utils/settings_helper.dart';
@@ -288,6 +290,13 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
         onLogoutPressed: () => handleLogout(context),
         extraActions: [
           IconButton(
+            icon: const Icon(Icons.bar_chart_rounded),
+            onPressed: () {
+              navigateWithSlide(context, const StatisticsScreen());
+            },
+            tooltip: "Statistics",
+          ),
+          IconButton(
             icon: const Icon(Icons.account_circle),
             onPressed: () {
               navigateWithSlide(context, const ProfileScreen());
@@ -354,7 +363,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                     message: "Hard Mode Enabled",
                     child: Chip(
                       label: const Text(
-                        "HARD MODE",
+                        "Hard Mode Enabled",
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1,

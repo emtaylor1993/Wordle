@@ -28,6 +28,7 @@ import 'package:wordle/screens/login_screen.dart';
 import 'package:wordle/screens/profile_screen.dart';
 import 'package:wordle/screens/puzzle_screen.dart';
 import 'package:wordle/screens/signup_screen.dart';
+import 'package:wordle/screens/statistics_screen.dart';
 
 /// Main entry point for the Wordle application. Loads environment variables from `.env`
 /// file and initalizes application-wide state providers.
@@ -80,12 +81,13 @@ class WordleApp extends StatelessWidget {
       // If authenticated, go straight to the puzzle screen.
       home: authProvider.isAuthenticated ? const PuzzleScreen() : const LoginScreen(),
       
-      // Define named routes for screen tarnsitions.
+      // Define named routes for screen transitions.
       routes: {
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
         '/puzzle': (context) => const PuzzleScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/stats': (context) => const StatisticsScreen(),
       },
     );
   }

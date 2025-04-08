@@ -16,6 +16,7 @@
 ///  - http/http.dart: Handles network requests to backend.
 ///  - image_picker/image_picker.dart: Used to pick a local image from the user's gallery.
 ///  - provider/provider.dart: State management for settings and authentication.
+///  - screens/statistics_screen.dart: Implementations for the statistics screen.
 ///  - wordle/providers/auth_provider.dart: Authentication implementations.
 ///  - wordle/utils/*: Implementations for authentication, settings and snackbar helpers.
 ///  - wordle/widgets/app_bar.dart: Shared AppBar with logout and settings actions.
@@ -29,7 +30,9 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:wordle/providers/auth_provider.dart';
+import 'package:wordle/screens/statistics_screen.dart';
 import 'package:wordle/utils/auth_helper.dart';
+import 'package:wordle/utils/navigation_helper.dart';
 import 'package:wordle/utils/settings_helper.dart';
 import 'package:wordle/utils/snackbar_helper.dart';
 import 'package:wordle/widgets/app_bar.dart';
@@ -46,16 +49,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   // User attributes.
   String? _username;
-  int? _streak;
   String? _profileImage;
-
-  // Gameplay statistics.
-  int? _totalGames;
-  int? _wins;
-  double? _winRate;
-  double? _avgGuesses;
-  int? _maxStreak;
-
   bool _isLoading = true;
 
   // Load API base URL from the environment variables.
@@ -83,13 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final data = jsonDecode(res.body);
         setState(() {
           _username = data['username'];
-          _streak = data['streak'];
           _profileImage = data['profileImage'];
-          _totalGames = data['totalGames'];
-          _wins = data['wins'];
-          _winRate = double.tryParse(data['winRate'].toString()) ?? 0.0;
-          _avgGuesses = double.tryParse(data['avgGuesses'].toString()) ?? 0.0;
-          _maxStreak = data['maxStreak'];
         });
       } else {
         if (!mounted) return;
@@ -143,20 +131,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-    appBar: buildAppBar(
-      context: context,
-      title: "Profile",
-      onSettingsPressed: () {
-        showModalBottomSheet(
-          context: context,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      appBar: buildAppBar(
+        context: context,
+        title: "Profile",
+        onSettingsPressed: () {
+          showModalBottomSheet(
+            context: context,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            builder: (_) => buildSettingsSheet(context),
+          );
+        },
+        onLogoutPressed: () => handleLogout(context),
+        extraActions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart_rounded),
+            onPressed: () {
+              navigateWithSlide(context, const StatisticsScreen());
+            },
+            tooltip: "Statistics",
           ),
-          builder: (_) => buildSettingsSheet(context),
-        );
-      },
-      onLogoutPressed: () => handleLogout(context),
-    ),
+        ],
+      ),
       body: Center(
         child: _isLoading
             ? const CircularProgressIndicator()
@@ -192,29 +189,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _username ?? "User",
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
-                        const SizedBox(height: 8),
-                        Text("🔥 Streak: $_streak", style: const TextStyle(fontSize: 16)),
 
                         const Divider(height: 32),
 
-                        // Gameplay Statistics Row 1.
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _statTile("Games", _totalGames?.toString() ?? "0"),
-                            _statTile("Wins", _wins?.toString() ?? "0"),
-                            _statTile("Win %", "${_winRate?.toStringAsFixed(1) ?? '0'}%"),
-                          ],
+                        // Awards Placeholder.
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "🏆 Awards",
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        
-                        // Gameplay Statistics Row 2.
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _statTile("Avg Guesses", _avgGuesses?.toStringAsFixed(1) ?? "0.0"),
-                            _statTile("Max Streak", _maxStreak?.toString() ?? "0"),
-                          ],
+                        const SizedBox(height: 12),
+                        Container(
+                          width: double.infinity,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            "No Awards Yet. Keep Playing!",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -222,19 +223,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
       ),
-    );
-  }
-
-  /// Builds a styled statistics tile for label/value display.
-  Widget _statTile(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        Text(label, style: const TextStyle(fontSize: 14)),
-      ],
     );
   }
 }

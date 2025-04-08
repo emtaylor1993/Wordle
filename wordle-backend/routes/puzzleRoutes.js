@@ -15,8 +15,9 @@
  *   - puzzleController: Contains handler for puzzle-related logic.
  * 
  * Routes:
- *   - POST /api/puzzle/guess: Accepts a user guess and returns feedback.
- *   - GET  /api/puzzle/today: Returns today's puzzle and user progress.
+ *   - GET  /api/puzzle/calendar: Returns a list of puzzle dates for completed games.
+ *   - POST /api/puzzle/guess:    Accepts a user guess and returns feedback.
+ *   - GET  /api/puzzle/today:    Returns today's puzzle and user progress.
  ******************************************************************************************************/
 
 const express = require("express");
@@ -26,12 +27,15 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 
 // Controller functions for puzzle logic.
-const { getTodayPuzzle, submitGuess } = require("../controllers/puzzleController");
+const { getTodayPuzzle, submitGuess, getStreakCalendar } = require("../controllers/puzzleController");
 
 // Route to fetch the current day's puzzle and the user's progress.
 router.get("/today", authMiddleware, getTodayPuzzle);
 
 // Route to submit a guess for the current puzzle.
 router.post("/guess", authMiddleware, submitGuess);
+
+// Route to fetch the list of dates for the Calendar widget.
+router.get("/calendar", authMiddleware, getStreakCalendar);
 
 module.exports = router;
